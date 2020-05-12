@@ -57,19 +57,20 @@ ode = DifferentialEquation(func=transition,
                            t0=0)
 
 with pm.Model() as model:
-    sigma = pm.HalfCauchy('sigma', beta=1, shape=len(Parameters._fields))
-
+    #
     N = pm.Poisson('N', mu=args.population)
-    beta = pm.Uniform('beta', lower=0.25, upper=1)
+    beta = pm.Uniform('beta', lower=1/4, upper=1)
     gamma = pm.Uniform('gamma', lower=1/14, upper=1/7)
-    mu = pm.Uniform('mu', lower=1/1000, upper=1/3)
+    mu = pm.Uniform('mu', lower=1/10, upper=1/3)
 
     fit = ode(y0=y0, theta=(N, beta, gamma, mu))
-    Y = pm.Lognormal('Y',
-                     mu=pm.math.log(fit),
-                     sigma=sigma,
-                     observed=df.iloc[1:])
 
+    #
+    sigma = pm.HalfNormal('sigma', sigma=1, shape=len(Compartments._fields))
+
+    Y = pm.Normal('Y', mu=fit, sigma=sigma, observed=df.iloc[1:])
+
+    #
     prior = pm.sample_prior_predictive()
     posterior = pm.sample(cores=mp.cpu_count())
     posterior_pred = pm.sample_posterior_predictive(posterior)
