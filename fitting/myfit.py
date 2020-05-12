@@ -41,7 +41,9 @@ arguments = ArgumentParser()
 arguments.add_argument('--population', type=int, default=int(1e6))
 args = arguments.parse_args()
 
-df = pd.read_csv(sys.stdin, index_col='date', parse_dates=True)
+df = (pd
+      .read_csv(sys.stdin, index_col='date', parse_dates=True)
+      .divide(args.population))
 
 dayone = df.index.min()
 span = df.index.max() - dayone
