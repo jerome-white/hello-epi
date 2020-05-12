@@ -5,6 +5,6 @@ state=mh
 pop=10000000
 
 wget --quiet --output-document=- $url | \
-    python get.py | \
-    python extract.py --state $state | \
-    python add-susceptible.py --population $pop --with-variance
+    python $here/get.py | \
+    python $here/extract.py --state $state | \
+    python $here/add-susceptible.py --population $population --with-variance
