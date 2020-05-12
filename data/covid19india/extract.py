@@ -14,4 +14,7 @@ df = (pd
              columns='status',
              values='count')
       .rename(columns={'confirmed': 'infected'}))
+if df.empty:
+    raise ValueError('No data! Likely an invalid state: "{}"'
+                     .format(args.state))
 df.to_csv(sys.stdout)
