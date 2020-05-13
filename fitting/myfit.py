@@ -1,57 +1,80 @@
 import sys
+import pickle
 import collections as cl
 import multiprocessing as mp
 from argparse import ArgumentParser
 
-import arviz as az
+# import arviz as az
 import pymc3 as pm
 import pandas as pd
 from pymc3.ode import DifferentialEquation
 from scipy import constants
 
-Compartments = cl.namedtuple('Compartments', [
-    'susceptible',
-    'infected',
-    'recovered',
-    'deceased',
-])
+Split = cl.namedtuple('Split', 'train, test')
 
-Parameters = cl.namedtuple('Parameters', [
-    'N',
-    'beta',
-    'gamma',
-    'mu',
-])
+class EpiModel:
+    _compartments = (
+        'susceptible',
+        'infected',
+        'recovered',
+        'deceased',
+    )
+    _parameters = (
+        'N',
+        'beta',
+        'gamma',
+        'mu',
+    )
 
-def transition(y, t, p):
-    I = y[1]
+    def __init__(self, df):
+        assert len(df.columns) == len(self._compartments)
 
-    dS = (p[1] * I * y[0]) / p[0]
-    dR = p[2] * I
-    dD = p[3] * I
-    dI = dS - dR - dD
+        dayone = df.index.min()
+        span = df.index.max() - dayone
 
-    return [ -dS, dI, dR, dD, ]
+        self.y0 = df.loc[dayone]
+        self.observed = df.iloc[1:]
+        self.duration = round(span.total_seconds() / constants.day)
+
+    def __len__(self):
+        return self.duration
+
+    @staticmethod
+    def transition(y, t, p):
+        I = y[1]
+
+        dS = (p[1] * I * y[0]) / p[0]
+        dR = p[2] * I
+        dD = p[3] * I
+        dI = dS - dR - dD
+
+        return [ -dS, dI, dR, dD, ]
+
+def dsplit(df, outlook):
+    y = df.index.max() - pd.DateOffset(days=outlook)
+    x = y - pd.DateOffset(days=1)
+
+    return Split(df.loc[:str(x)], df.loc[str(y):])
 
 arguments = ArgumentParser()
 arguments.add_argument('--population', type=int, default=int(1e6))
+arguments.add_argument('--prediction-days', type=int, default=0)
 args = arguments.parse_args()
 
-df = (pd
-      .read_csv(sys.stdin, index_col='date', parse_dates=True)
-      .divide(args.population))
+df = pd.read_csv(sys.stdin,
+                 index_col='date',
+                 parse_dates=True)
+split = dsplit(df, args.prediction_days)
 
-dayone = df.index.min()
-span = df.index.max() - dayone
-duration = round(span.total_seconds() / constants.day)
-y0 = df.loc[dayone].to_numpy()
-
-ode = DifferentialEquation(func=transition,
-                           times=range(duration),
-                           n_states=len(y0),
-                           n_theta=len(Parameters._fields),
+epi = EpiModel(split.train)
+ode = DifferentialEquation(func=epi.transition,
+                           times=range(len(epi)),
+                           n_states=len(epi._compartments),
+                           n_theta=len(epi._parameters),
                            t0=0)
 
+obskey = 'Y'
+datkey = 'observed'
 with pm.Model() as model:
     #
     N = pm.Poisson('N', mu=args.population)
@@ -59,18 +82,22 @@ with pm.Model() as model:
     gamma = pm.Uniform('gamma', lower=1/14, upper=1/7)
     mu = pm.Uniform('mu', lower=1/10, upper=1/3)
 
-    fit = ode(y0=y0, theta=(N, beta, gamma, mu))
+    fit = ode(y0=epi.y0, theta=(N, beta, gamma, mu))
 
     #
-    sigma = pm.HalfNormal('sigma', sigma=1, shape=len(Compartments._fields))
+    sigma = pm.HalfNormal('sigma', sigma=1, shape=len(epi._compartments))
+    observed = pm.Data(datkey, epi.observed)
 
-    Y = pm.Normal('Y', mu=fit, sigma=sigma, observed=df.iloc[1:])
+    Y = pm.Normal(obskey, mu=fit, sigma=sigma, observed=observed)
 
     #
-    prior = pm.sample_prior_predictive()
     posterior = pm.sample(cores=mp.cpu_count())
+
+with model:
+    pm.set_data({
+        datkey: df,
+    })
     posterior_pred = pm.sample_posterior_predictive(posterior)
 
-    # data = az.from_pymc3(trace=trace,
-    #                      prior=prior,
-    #                      posterior_predictive=posterior_predictive)
+f = lambda x: pd.DataFrame(x, columns=EpiModel._compartments).reset_index()
+pd.concat(map(f, posterior_pred[obskey])).to_csv(sys.stdout, index=False)
