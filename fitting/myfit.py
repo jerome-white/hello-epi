@@ -1,7 +1,3 @@
-#
-# https://docs.pymc.io/notebooks/ODE_API_introduction.html
-#
-
 import sys
 import collections as cl
 import multiprocessing as mp
