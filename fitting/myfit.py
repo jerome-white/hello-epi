@@ -87,13 +87,12 @@ with pm.Model() as model:
     Y = pm.Normal(obskey, mu=fit, sigma=sigma, observed=epi.observed)
 
     #
-    posterior = pm.sample(cores=mp.cpu_count())
+    posterior = pm.sample(cores=mp.cpu_count(),
+                          target_accept=0.95)
+    pm.trace_to_dataframe(posterior).to_csv(sys.stdout)
 
-with model:
-    pm.set_data({
-        datkey: df,
-    })
-    posterior_pred = pm.sample_posterior_predictive(posterior)
+# with model:
+#     posterior_pred = pm.sample_posterior_predictive(posterior)
 
-f = lambda x: pd.DataFrame(x, columns=EpiModel._compartments).reset_index()
-pd.concat(map(f, posterior_pred[obskey])).to_csv(sys.stdout, index=False)
+# f = lambda x: pd.DataFrame(x, columns=EpiModel._compartments).reset_index()
+# pd.concat(map(f, posterior_pred[obskey])).to_csv(sys.stdout, index=False)
