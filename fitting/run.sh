@@ -13,7 +13,7 @@ init=`mktemp` ; head --lines=2 $raw | cut --delimiter=',' --fields=2- > $init
 train=`mktemp`; head --lines=-$tr_days $raw > $train
 
 python estimate.py --population $pop < $train | \
-    python project.py --initial $initial --outlook $te_days |
+    python project.py --population $pop --initial $initial --outlook $te_days |
     python visualize.py --output fit.png
 
 rm $raw $init $train
