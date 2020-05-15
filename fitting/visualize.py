@@ -13,7 +13,7 @@ arguments.add_argument('--output', type=Path)
 arguments.add_argument('--with-susceptible', action='store_true')
 args = arguments.parse_args()
 
-index = 'index'
+index = 'day'
 compartments = cl.deque([
     'infected',
     'recovered',
