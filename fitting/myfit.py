@@ -83,10 +83,8 @@ with pm.Model() as model:
     fit = ode(y0=epi.y0, theta=(beta, gamma, mu))
 
     #
-    sigma = pm.HalfNormal('sigma', sigma=1, shape=len(epi._compartments))
-    observed = pm.Data(datkey, epi.observed)
-
-    Y = pm.Normal(obskey, mu=fit, sigma=sigma, observed=observed)
+    sigma = pm.HalfNormal('sigma', sigma=scale, shape=len(epi._compartments))
+    Y = pm.Normal(obskey, mu=fit, sigma=sigma, observed=epi.observed)
 
     #
     posterior = pm.sample(cores=mp.cpu_count())
