@@ -23,18 +23,20 @@ def dsplit(df, outlook):
 #
 class EpiFitter:
     def __init__(self, epimodel, days):
+        self.model = epimodel
         self.days = days
-        self.ode = DifferentialEquation(func=epimodel,
-                                        times=range(len(self)),
-                                        n_states=len(epimodel.compartments),
-                                        n_theta=len(epimodel.parameters),
-                                        t0=0)
 
     def __len__(self):
         return self.days
 
     def solve(self, y0, theta):
-        return self.ode(y0=y0, theta=theta)
+        ode = DifferentialEquation(func=self.model,
+                                   times=range(len(self)),
+                                   n_states=len(self.model.compartments),
+                                   n_theta=len(self.model.parameters),
+                                   t0=0)
+
+        return ode(y0=y0, theta=theta)
 
 #
 #
