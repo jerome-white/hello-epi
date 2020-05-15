@@ -11,7 +11,6 @@ from util import EpiFitter, SIRD, Logger
 def func(incoming, outgoing, args):
     model = SIRD(args.population)
     fit = EpiFitter(model, args.outlook)
-
     initial = (pd
                .read_csv(args.initial)
                .to_dict(orient='records')
@@ -20,6 +19,7 @@ def func(incoming, outgoing, args):
 
     while True:
         params = incoming.get()
+
         theta = [ params[x] for x in model.parameters ]
         Logger.info(
             ' '.join(map(': '.join, zip(model.parameters, map(str, theta))))
@@ -29,7 +29,7 @@ def func(incoming, outgoing, args):
         df = (pd
               .DataFrame(data=data,
                          columns=model.compartments,
-                         index=fit.times)
+                         index=range(len(fit)))
               .reset_index()
               .rename(columns={'index': 'day'}))
 
