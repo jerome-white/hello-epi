@@ -61,9 +61,8 @@ arguments.add_argument('--population', type=int, default=int(1e6))
 arguments.add_argument('--prediction-days', type=int, default=0)
 args = arguments.parse_args()
 
-df = pd.read_csv(sys.stdin,
-                 index_col='date',
-                 parse_dates=True)
+df = pd.read_csv(sys.stdin, index_col='date', parse_dates=True)
+assert df.sum(axis='columns').le(args.population).all()
 split = dsplit(df, args.prediction_days)
 
 epi = EpiModel(split.train, args.population)
