@@ -52,6 +52,5 @@ with pm.Model() as model:
     Y = pm.Normal('Y', mu=sol, sigma=sigma, observed=observed)
 
     #
-    posterior = pm.sample(cores=mp.cpu_count(),
-                          target_accept=0.95)
+    posterior = pm.sample(cores=mp.cpu_count(), target_accept=0.95)
     pm.trace_to_dataframe(posterior).to_csv(sys.stdout, index=False)
