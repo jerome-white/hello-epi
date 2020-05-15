@@ -21,18 +21,18 @@ class EpiModel:
         'deceased',
     )
     _parameters = (
-        'N',
         'beta',
         'gamma',
         'mu',
     )
 
-    def __init__(self, df):
+    def __init__(self, df, N):
         assert len(df.columns) == len(self._compartments)
 
         dayone = df.index.min()
         span = df.index.max() - dayone
 
+        self.N = N
         self.y0 = df.loc[dayone]
         self.observed = df.iloc[1:]
         self.duration = round(span.total_seconds() / constants.day)
@@ -40,13 +40,12 @@ class EpiModel:
     def __len__(self):
         return self.duration
 
-    @staticmethod
-    def transition(y, t, p):
+    def transition(self, y, t, p):
         I = y[1]
 
-        dS = (p[1] * I * y[0]) / p[0]
-        dR = p[2] * I
-        dD = p[3] * I
+        dS = (p[0] * I * y[0]) / self.N
+        dR = p[1] * I
+        dD = p[2] * I
         dI = dS - dR - dD
 
         return [ -dS, dI, dR, dD, ]
@@ -67,7 +66,7 @@ df = pd.read_csv(sys.stdin,
                  parse_dates=True)
 split = dsplit(df, args.prediction_days)
 
-epi = EpiModel(split.train)
+epi = EpiModel(split.train, args.population)
 ode = DifferentialEquation(func=epi.transition,
                            times=range(len(epi)),
                            n_states=len(epi._compartments),
@@ -79,12 +78,10 @@ datkey = 'observed'
 scale = max(1, math.log(epi.observed.std().mean()))
 with pm.Model() as model:
     #
-    N = pm.Poisson('N', mu=args.population)
-    beta = pm.Uniform('beta', lower=1/4, upper=1)
-    gamma = pm.Uniform('gamma', lower=1/14, upper=1/7)
-    mu = pm.Uniform('mu', lower=1/10, upper=1/3)
-
-    fit = ode(y0=epi.y0, theta=(N, beta, gamma, mu))
+    beta = pm.Uniform('beta', lower=0.05, upper=0.3)
+    gamma = pm.Uniform('gamma', lower=1/30, upper=1/7)
+    mu = pm.Uniform('mu', lower=0.001, upper=0.08)
+    fit = ode(y0=epi.y0, theta=(beta, gamma, mu))
 
     #
     sigma = pm.HalfNormal('sigma', sigma=1, shape=len(epi._compartments))
