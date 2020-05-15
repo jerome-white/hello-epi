@@ -15,7 +15,7 @@ train=`mktemp`; head --lines=-$tr_days $raw > $train
 outlook=`expr $(wc --lines $raw | cut --delimiter=' ' --fields=1) + $te_days`
 
 python estimate.py --population $pop < $train | \
-    python project.py --population $pop --initial $init --outlook $outlook |
+    python project.py --population $pop --initial $init --outlook $outlook | \
     python visualize.py --output fit.png
 
 rm $raw $init $train
