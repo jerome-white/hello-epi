@@ -1,4 +1,5 @@
 import sys
+import math
 import pickle
 import collections as cl
 import multiprocessing as mp
@@ -75,6 +76,7 @@ ode = DifferentialEquation(func=epi.transition,
 
 obskey = 'Y'
 datkey = 'observed'
+scale = max(1, math.log(epi.observed.std().mean()))
 with pm.Model() as model:
     #
     N = pm.Poisson('N', mu=args.population)
