@@ -25,7 +25,7 @@ def func(incoming, outgoing, args):
             ' '.join(map(': '.join, zip(model.parameters, map(str, theta))))
         )
 
-        data = fit.solve(y0, theta).eval()
+        data = fit(y0, theta).eval()
         df = (pd
               .DataFrame(data=data,
                          columns=model.compartments,

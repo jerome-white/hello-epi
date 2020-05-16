@@ -45,7 +45,7 @@ with pm.Model() as model:
     beta = pm.Uniform('beta', lower=0.05, upper=0.3)
     gamma = pm.Uniform('gamma', lower=1/30, upper=1/7)
     mu = pm.Uniform('mu', lower=0.001, upper=0.08)
-    sol = fit.solve(y0.to_numpy().ravel(), (beta, gamma, mu))
+    sol = fit(y0.to_numpy().ravel(), (beta, gamma, mu))
 
     #
     sigma = pm.HalfNormal('sigma', sigma=scale, shape=shape)
