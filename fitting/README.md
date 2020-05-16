@@ -22,4 +22,4 @@ This is very much a work-in-progress!
 ## Known issues
 
 Theano may complain about locking issues during projection. This
-apparently is a known issue with not concrete solution.
+seems to be a known issue with no concrete solution.
