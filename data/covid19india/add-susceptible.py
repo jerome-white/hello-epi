@@ -16,6 +16,7 @@ f = np.random.poisson if args.with_variance else np.repeat
 values = f(args.population, len(df)) * np.clip(args.fraction, 0, 1)
 susceptible = (pd
                .Series(values, name='susceptible', index=df.index)
+               .sub(df.sum(axis='columns'))
                .round())
 
 df = pd.concat((susceptible, df), axis='columns')
