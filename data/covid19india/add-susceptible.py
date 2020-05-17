@@ -6,7 +6,7 @@ import pandas as pd
 
 arguments = ArgumentParser()
 arguments.add_argument('--population', type=int)
-arguments.add_argument('--fraction', type=float, default=0.8)
+arguments.add_argument('--fraction', type=float, default=1)
 arguments.add_argument('--with-variance', action='store_true')
 args = arguments.parse_args()
 
