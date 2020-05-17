@@ -11,5 +11,6 @@ df = (pd
       .read_csv(sys.stdin, index_col='date', parse_dates=['date'])
       .rolling(args.window, center=True, win_type='gaussian')
       .mean(std=1)
-      .dropna())
+      .dropna()
+      .round())
 df.to_csv(sys.stdout)
