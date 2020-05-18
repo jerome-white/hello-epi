@@ -9,13 +9,13 @@ import pandas as pd
 from util import EpiFitter, SIRD, Logger
 
 def func(incoming, outgoing, args):
-    model = SIRD(args.population)
-    fit = EpiFitter(model, args.outlook)
     initial = (pd
                .read_csv(args.initial)
                .to_dict(orient='records')
                .pop())
+    model = SIRD(sum(initial.values()))
     y0 = [ initial[x] for x in model.compartments ]
+    fit = EpiFitter(model, args.outlook)
 
     while True:
         params = incoming.get()
@@ -56,7 +56,6 @@ def each(args, fp):
             yield result
 
 arguments = ArgumentParser()
-arguments.add_argument('--population', type=int, default=int(1e6))
 arguments.add_argument('--initial', type=Path)
 arguments.add_argument('--outlook', type=int)
 arguments.add_argument('--workers', type=int)

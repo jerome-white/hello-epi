@@ -1,29 +1,23 @@
 import sys
 import math
 import multiprocessing as mp
-from argparse import ArgumentParser
 
-# import arviz as az
 import pymc3 as pm
 import pandas as pd
 from scipy import constants
 
-from util import EpiFitter, SIRD, dsplit
-
-arguments = ArgumentParser()
-arguments.add_argument('--population', type=int, default=int(1e6))
-args = arguments.parse_args()
+from util import EpiFitter, SIRD, Logger, dsplit
 
 #
 # Aquire the data
 #
 df = pd.read_csv(sys.stdin, index_col='date', parse_dates=True)
-assert df.sum(axis='columns').le(args.population).all()
+(y0, observed) = dsplit(df, len(df) - 2)
 
 #
 # Initialise the model
 #
-epimodel = SIRD(args.population)
+epimodel = SIRD(y0.squeeze().sum())
 assert len(df.columns) == len(epimodel.compartments)
 
 span = df.index.max() - df.index.min()
@@ -33,7 +27,6 @@ fit = EpiFitter(epimodel, duration)
 #
 # Establish PyMC3 model parameters
 #
-(y0, observed) = dsplit(df, len(df) - 2)
 scale = max(1, math.log(observed.std().mean()))
 shape = len(epimodel.compartments)
 
