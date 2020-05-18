@@ -29,7 +29,7 @@ def func(incoming, outgoing, args):
         df = (pd
               .DataFrame(data=data,
                          columns=model.compartments,
-                         index=range(len(fit)))
+                         index=range(args.outlook))
               .reset_index()
               .rename(columns={'index': 'day'}))
 
