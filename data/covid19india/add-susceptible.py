@@ -15,9 +15,12 @@ df = pd.read_csv(sys.stdin, index_col='date', parse_dates=True)
 f = np.random.poisson if args.with_variance else np.repeat
 values = f(args.population, len(df)) * np.clip(args.fraction, 0, 1)
 susceptible = (pd
-               .Series(values, name='susceptible', index=df.index)
+               .Series(values, index=df.index)
                .sub(df.sum(axis='columns'))
-               .round())
+               .to_frame(name='susceptible'))
 
-df = pd.concat((susceptible, df), axis='columns')
+df = (pd
+      .concat((susceptible, df), axis='columns')
+      .round()
+      .astype(int))
 df.to_csv(sys.stdout)
