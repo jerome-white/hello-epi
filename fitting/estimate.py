@@ -25,12 +25,6 @@ duration = round(span.total_seconds() / constants.day)
 fit = EpiFitter(epimodel, duration)
 
 #
-# Establish PyMC3 model parameters
-#
-scale = max(1, math.log(observed.std().mean()))
-shape = len(epimodel.compartments)
-
-#
 # Explore!
 #
 with pm.Model() as model:
@@ -38,11 +32,13 @@ with pm.Model() as model:
     beta = pm.Uniform('beta', lower=0.05, upper=0.3)
     gamma = pm.Uniform('gamma', lower=1/30, upper=1/7)
     mu = pm.Uniform('mu', lower=0.001, upper=0.08)
-    sol = fit(y0.to_numpy().ravel(), (beta, gamma, mu))
+    solution = fit(y0.to_numpy().ravel(), (beta, gamma, mu))
 
     #
-    sigma = pm.HalfNormal('sigma', sigma=scale, shape=shape)
-    Y = pm.Normal('Y', mu=sol, sigma=sigma, observed=observed)
+    sigma = pm.HalfNormal('sigma',
+                          sigma=observed.std(),
+                          shape=len(epimodel.compartments))
+    Y = pm.Normal('Y', mu=solution, sigma=sigma, observed=observed)
 
     #
     posterior = pm.sample(cores=mp.cpu_count(), target_accept=0.95)
