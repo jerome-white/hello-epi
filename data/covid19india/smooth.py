@@ -12,5 +12,6 @@ df = (pd
       .rolling(args.window, center=True, win_type='gaussian')
       .mean(std=1)
       .dropna()
-      .round())
+      .round()
+      .astype(int))
 df.to_csv(sys.stdout)
