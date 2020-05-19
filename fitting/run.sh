@@ -7,6 +7,7 @@ pop=10000000
 state=mh
 tr_days=7
 pr_days=180
+pr_viz_days=10
 
 path=results/`TZ=Asia/Kolkata date +%j-%d%b-%I%M | tr [:lower:] [:upper:]`
 mkdir --parents $path
@@ -35,5 +36,11 @@ python project.py --initial $init --outlook `expr $days + $pr_days` < \
        $path/params.csv > \
        $path/projection.csv
 rm $init
+
+python visualize.py \
+       --ground-truth $path/raw.csv \
+       --project $pr_viz_days \
+       --output $path/fit.png < \
+       $path/projection.csv
 
 gzip $path/params.csv
