@@ -42,5 +42,3 @@ python visualize.py \
        --project $pr_viz_days \
        --output $path/fit.png < \
        $path/projection.csv
-
-gzip $path/params.csv
