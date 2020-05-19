@@ -6,17 +6,34 @@ root=`git rev-parse --show-toplevel`
 pop=10000000
 state=mh
 tr_days=7
-te_days=30
+pr_days=180
 
-raw=`mktemp`  ; $root/data/covid19india/get.sh -p $pop -s $state > $raw
-init=`mktemp` ; head --lines=2 $raw | cut --delimiter=',' --fields=2- > $init
-train=`mktemp`; head --lines=-$tr_days $raw > $train
+path=results/`TZ=Asia/Kolkata date +%j-%d%b-%I%M | tr [:lower:] [:upper:]`
+mkdir --parents $path
 
-outlook=`expr $(wc --lines $raw | cut --delimiter=' ' --fields=1) + $te_days`
+#
+# Get the data
+#
+$root/data/covid19india/get.sh -p $pop -s $state > $path/raw.csv
 
-params=`mktemp`
-python estimate.py < $train > $params
-python project.py --initial $init --outlook $outlook < $params | \
-    python visualize.py --output fit.png
+#
+#
+#
+python $root/data/covid19india/smooth.py --window 3 < $path/raw.csv | \
+    head --lines=-$tr_days | \
+    python estimate.py > $path/params.csv
 
-rm $raw $init $train $params
+#
+#
+#
+init=`mktemp`
+head --lines=2 $path/raw.csv | cut --delimiter=',' --fields=2- > $init
+days=`tail --lines=+2 $path/raw.csv | \
+	   wc --lines | \
+	   cut --delimiter=' ' --fields=1`
+python project.py --initial $init --outlook `expr $days + $pr_days` < \
+       $path/params.csv > \
+       $path/projection.csv
+rm $init
+
+gzip $path/params.csv
