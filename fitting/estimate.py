@@ -51,3 +51,6 @@ with pm.Model() as model:
     #
     posterior = pm.sample(cores=args.workers, target_accept=0.95)
     pm.trace_to_dataframe(posterior).to_csv(sys.stdout, index=False)
+    if args.trace is not None:
+        ax = pm.traceplot(posterior)
+        ax.get_figure().savefig(args.trace, bbox_inches='tight')
