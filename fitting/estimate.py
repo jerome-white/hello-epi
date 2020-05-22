@@ -45,7 +45,7 @@ with pm.Model() as model:
     #
     sigma = pm.HalfNormal('sigma',
                           sigma=observed.std(),
-                          shape=len(epimodel.compartments))
+                          shape=len(epimodel._compartments))
     Y = pm.Normal('Y', mu=solution, sigma=sigma, observed=observed)
 
     #
