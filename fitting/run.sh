@@ -9,7 +9,7 @@ tr_days=7
 pr_days=180
 pr_viz_days=10
 
-path=results/`TZ=Asia/Kolkata date +%j-%d%b-%I%M | tr [:lower:] [:upper:]`
+path=results/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
 mkdir --parents $path
 
 #
