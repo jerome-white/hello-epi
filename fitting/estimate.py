@@ -1,12 +1,19 @@
 import sys
 import math
 import multiprocessing as mp
+from pathlib import Path
+from argparse import ArgumentParser
 
 import pymc3 as pm
 import pandas as pd
 from scipy import constants
 
 from util import EpiFitter, SIRD, Logger, dsplit
+
+arguments = ArgumentParser()
+arguments.add_argument('--trace', type=Path)
+arguments.add_argument('--workers', type=int, default=mp.cpu_count())
+args = arguments.parse_args()
 
 #
 # Aquire the data
