@@ -11,7 +11,9 @@ from util import EpiFitter, SIRD, Logger, dsplit
 #
 # Aquire the data
 #
-df = pd.read_csv(sys.stdin, index_col='date', parse_dates=True)
+df = (pd
+      .read_csv(sys.stdin, index_col='date', parse_dates=True)
+      .reindex(columns=SIRD._compartments))
 (y0, observed) = dsplit(df, len(df) - 2)
 
 #

@@ -14,13 +14,8 @@ df = pd.read_csv(sys.stdin, index_col='date', parse_dates=True)
 
 f = np.random.poisson if args.with_variance else np.repeat
 values = f(args.population, len(df)) * np.clip(args.fraction, 0, 1)
-susceptible = (pd
-               .Series(values, index=df.index)
-               .sub(df.sum(axis='columns'))
-               .to_frame(name='susceptible'))
-
-df = (pd
-      .concat((susceptible, df), axis='columns')
+df = (df
+      .assign(susceptible=np.subtract(values, df.sum(axis='columns')))
       .round()
       .astype(int))
 df.to_csv(sys.stdout)
