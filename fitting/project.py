@@ -14,21 +14,21 @@ def func(incoming, outgoing, args):
                .to_dict(orient='records')
                .pop())
     model = SIRD(sum(initial.values()))
-    y0 = [ initial[x] for x in model.compartments ]
+    y0 = [ initial[x] for x in model._compartments ]
     fit = EpiFitter(model, args.outlook)
 
     while True:
         params = incoming.get()
 
-        theta = [ params[x] for x in model.parameters ]
+        theta = [ params[x] for x in model._parameters ]
         Logger.info(
-            ' '.join(map(': '.join, zip(model.parameters, map(str, theta))))
+            ' '.join(map(': '.join, zip(model._parameters, map(str, theta))))
         )
 
         data = fit(y0, theta).eval()
         df = (pd
               .DataFrame(data=data,
-                         columns=model.compartments,
+                         columns=model._compartments,
                          index=range(args.outlook))
               .reset_index()
               .rename(columns={'index': 'day'}))
