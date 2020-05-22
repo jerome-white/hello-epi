@@ -11,6 +11,7 @@ pr_viz_days=10
 
 path=results/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
 mkdir --parents $path
+echo "[ `date` RESULTS ] $path"
 
 #
 # Get the data
