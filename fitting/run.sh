@@ -21,6 +21,7 @@ $root/data/covid19india/get.sh -p $pop -s $state > $path/raw.csv
 #
 #
 #
+rm --recursive --force $HOME/.theano/compiledir*
 python $root/data/covid19india/smooth.py --window 3 < $path/raw.csv | \
     head --lines=-$tr_days | \
     python estimate.py > $path/params.csv
