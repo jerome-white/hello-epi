@@ -25,25 +25,33 @@ class EpiFitter(DifferentialEquation):
     def __init__(self, epimodel, days):
         super().__init__(func=epimodel,
                          times=range(days),
-                         n_states=len(epimodel.compartments),
-                         n_theta=len(epimodel.parameters))
+                         n_states=len(epimodel._compartments),
+                         n_theta=len(epimodel._parameters))
 
 #
 #
 #
 class EpiModel:
+    _compartments = None
+    _parameters = None
+
     def __call__(self, y, t, p):
         raise NotImplementedError()
 
-    @property
-    def compartments(self):
-        raise NotImplementedError()
-
-    @property
-    def parameters(self):
-        raise NotImplementedError()
-
 class SIRD(EpiModel):
+    _compartments = (
+        'susceptible',
+        'infected',
+        'recovered',
+        'deceased',
+    )
+
+    _parameters = (
+        'beta',
+        'gamma',
+        'mu',
+    )
+
     def __init__(self, N):
         self.N = N
 
@@ -56,20 +64,3 @@ class SIRD(EpiModel):
         dI = dS - dR - dD
 
         return [ -dS, dI, dR, dD, ]
-
-    @property
-    def compartments(self):
-        return (
-            'susceptible',
-            'infected',
-            'recovered',
-            'deceased',
-        )
-
-    @property
-    def parameters(self):
-        return (
-            'beta',
-            'gamma',
-            'mu',
-        )
