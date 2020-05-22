@@ -27,7 +27,6 @@ df = (pd
 # Initialise the model
 #
 epimodel = SIRD(y0.squeeze().sum())
-assert len(df.columns) == len(epimodel.compartments)
 
 span = df.index.max() - df.index.min()
 duration = round(span.total_seconds() / constants.day)
