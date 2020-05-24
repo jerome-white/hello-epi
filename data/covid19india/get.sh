@@ -23,5 +23,4 @@ done
 here=$(dirname $(realpath $0))
 wget --quiet --output-document=- $url | \
     python $here/get.py | \
-    python $here/extract.py --state $state | \
-    python $here/add-susceptible.py --population $population
+    python $here/extract.py --state $state
