@@ -13,6 +13,7 @@ df = (pd
       .melt(id_vars=[date, 'Status'],
             var_name='state',
             value_name='count')
+      .dropna()
       .set_index(date)
       .assign(status=lambda x: x[status].str.lower())
       .drop(columns=status))
