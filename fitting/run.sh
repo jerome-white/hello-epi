@@ -3,8 +3,6 @@
 export PYTHONLOGLEVEL=info
 
 root=`git rev-parse --show-toplevel`
-pop=10000000
-state=mh
 tr_days=7
 pr_days=180
 pr_viz_days=10
@@ -16,7 +14,12 @@ echo "[ `date` RESULTS ] $path"
 #
 # Get the data
 #
-$root/data/covid19india/get.sh -p $pop -s $state > $path/raw.csv
+$root/data/covid19india/state-wise-daily.py |
+    python mkdata.py \
+	   --state maharashtra \
+	   --district pune \
+	   --population 100000 > \
+	   $path/raw.csv
 
 #
 #
