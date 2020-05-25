@@ -86,8 +86,9 @@ for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
                  ax=ax)
 
     view = gt.query('variable == "{}"'.format(c))
+    n_colors = len(view['split'].unique())
     palette = sns.color_palette(palette='Set2',
-                                n_colors=len(view['split'].unique()))
+                                n_colors=n_colors)
     sns.scatterplot(x='days',
                     y='value',
                     hue='split',
