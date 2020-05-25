@@ -29,7 +29,7 @@ for i in ${places[@]}; do
 done
 
 python $root/data/covid19india/state-wise-daily.py |
-    python mkdata.py ${args[@]} > $path/raw.csv
+    python make-sird.py ${args[@]} > $path/raw.csv
 
 #
 #
