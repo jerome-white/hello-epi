@@ -13,8 +13,8 @@ class Susceptible:
         return np.subtract(values, x.sum(axis='columns'))
 
 arguments = ArgumentParser()
-arguments.add_argument('--state')
-arguments.add_argument('--district')
+arguments.add_argument('--state', action='append')
+arguments.add_argument('--district', action='append')
 arguments.add_argument('--population', type=int, required=True)
 args = arguments.parse_args()
 
@@ -45,7 +45,8 @@ query = []
 for i in ('state', 'district'):
     value = getattr(args, i)
     if value:
-        query.append('{} == "{}"'.format(i, value))
+        j = ','.join(map('"{}"'.format, value))
+        query.append('{} in ({})'.format(i, j))
 if query:
     df = df.query(' and '.join(query))
 
