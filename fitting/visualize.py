@@ -26,6 +26,10 @@ def relative(x):
             .apply(lambda y: y.total_seconds() / constants.day)
             .to_numpy())
 
+def tickfmt(x, pos, start):
+    tick = start + pd.Timedelta(x, unit='D')
+    return tick.strftime('%d %b')
+
 arguments = ArgumentParser()
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--ground-truth', type=Path)
@@ -70,6 +74,7 @@ pr = pr.melt(id_vars=[index], value_vars=compartments, var_name=by)
 #
 #
 (_, axes) = plt.subplots(nrows=len(compartments), sharex=True) #, sharey=True)
+ticker = plt.FuncFormatter(ft.partial(tickfmt, start=gt.index.min()))
 for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
     Logger.info(c)
 
@@ -90,8 +95,8 @@ for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
                     legend=False,
                     palette=palette,
                     ax=ax)
-
     ax.grid(which='both')
-    ax.set_xlabel('Day')
     ax.set_ylabel(c.title())
+    ax.xaxis.label.set_visible(False)
+    ax.xaxis.set_major_formatter(ticker)
 plt.savefig(args.output)
