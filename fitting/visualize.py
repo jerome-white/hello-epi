@@ -91,14 +91,6 @@ for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
                     palette=palette,
                     ax=ax)
 
-    # for (i, (k, v)) in enumerate(split._asdict().items(), 1):
-    #     ax.plot(v[c].to_numpy(),
-    #             color=palette[i],
-    #             marker='o',
-    #             markeredgewidth=1.5,
-    #             markeredgecolor='white')
-
-    # ax.get_legend().remove()
     ax.grid(which='both')
     ax.set_xlabel('Day')
     ax.set_ylabel(c.title())
