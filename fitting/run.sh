@@ -7,6 +7,7 @@ places=(
     maharashtra:pune:13671091
     maharashtra:mumbai:2851561
 )
+smooth=3
 tr_days=5
 pr_days=180
 pr_viz_days=10
@@ -14,6 +15,18 @@ pr_viz_days=10
 path=results/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
 mkdir --parents $path
 echo "[ `date` RESULTS ] $path"
+
+#
+#
+#
+cat <<EOF > $path/README
+training days: $tr_days
+smoothing: $smooth
+EOF
+
+for i in ${places[@]}; do
+    echo "location: $i"
+done >> $path/README
 
 #
 # Get the data
@@ -35,7 +48,7 @@ python $root/data/covid19india/state-wise-daily.py |
 #
 #
 rm --recursive --force $HOME/.theano/compiledir*
-python $root/data/covid19india/smooth.py --window 3 < $path/raw.csv | \
+python $root/data/covid19india/smooth.py --window $smooth < $path/raw.csv | \
     head --lines=-$tr_days | \
     python estimate.py > $path/params.csv
 
