@@ -14,12 +14,10 @@ echo "[ `date` RESULTS ] $path"
 #
 # Get the data
 #
-$root/data/covid19india/state-wise-daily.py |
-    python mkdata.py \
-	   --state maharashtra \
-	   --district pune \
-	   --population 100000 > \
-	   $path/raw.csv
+# opts="--district pune --population 13671091"
+opts="--district mumbai --population 2851561"
+python $root/data/covid19india/state-wise-daily.py |
+    python mkdata.py $opts --state maharashtra $opts > $path/raw.csv
 
 #
 #
