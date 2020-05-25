@@ -7,7 +7,7 @@ places=(
     maharashtra:pune:13671091
     maharashtra:mumbai:2851561
 )
-tr_days=7
+tr_days=5
 pr_days=180
 pr_viz_days=10
 
@@ -52,8 +52,14 @@ python project.py --initial $init --outlook `expr $days + $pr_days` < \
        $path/projection.csv
 rm $init
 
+for i in $pr_days $pr_viz_days; do
+    fname=`printf "fit-%03d.png" $i`
+    cat <<EOF
 python visualize.py \
        --ground-truth $path/raw.csv \
-       --project $pr_viz_days \
-       --output $path/fit.png < \
+       --testing-days $tr_days \
+       --project $i \
+       --output $path/$fname < \
        $path/projection.csv
+EOF
+done | parallel --will-cite --line-buffer
