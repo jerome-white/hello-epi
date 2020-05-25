@@ -3,6 +3,10 @@
 export PYTHONLOGLEVEL=info
 
 root=`git rev-parse --show-toplevel`
+places=(
+    maharashtra:pune:13671091
+    maharashtra:mumbai:2851561
+)
 tr_days=7
 pr_days=180
 pr_viz_days=10
@@ -14,10 +18,18 @@ echo "[ `date` RESULTS ] $path"
 #
 # Get the data
 #
-# opts="--district pune --population 13671091"
-opts="--district mumbai --population 2851561"
+for i in ${places[@]}; do
+    opts=( `sed -e's/:/ /g' <<< $i` )
+    args=(
+	--state ${opts[0]}
+	--district ${opts[1]}
+	--population ${opts[2]}
+	${args[@]}
+    )
+done
+
 python $root/data/covid19india/state-wise-daily.py |
-    python mkdata.py $opts --state maharashtra $opts > $path/raw.csv
+    python mkdata.py ${args[@]} > $path/raw.csv
 
 #
 #
