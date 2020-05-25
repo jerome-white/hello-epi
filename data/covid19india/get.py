@@ -1,20 +1,33 @@
 import sys
+import json
+from argparse import ArgumentParser
 
 import pandas as pd
 
-date = 'date'
-status = 'Status'
+def records(fp, root):
+    raw = json.load(fp).get(root)
+
+    for (i, data) in raw.items():
+        state = i.casefold()
+        for (j, values) in data.items():
+            district = j.casefold()
+            for i in values:
+                v = {
+                    'state': state,
+                    'district': district,
+                }
+                v.update(i)
+
+                yield v
+
+arguments = ArgumentParser()
+arguments.add_argument('--root', default='districtsDaily')
+arguments.add_argument('--date-column', default='date')
+args = arguments.parse_args()
 
 df = (pd
-      .read_csv(sys.stdin,
-                parse_dates=['Date'],
-                infer_datetime_format=True)
-      .rename(columns={'Date': date})
-      .melt(id_vars=[date, 'Status'],
-            var_name='state',
-            value_name='count')
-      .dropna()
-      .set_index(date)
-      .assign(status=lambda x: x[status].str.lower())
-      .drop(columns=status))
+      .DataFrame
+      .from_records(records(sys.stdin, args.root))
+      .astype({ args.date_column: 'datetime64[D]' })
+      .set_index(args.date_column))
 df.to_csv(sys.stdout)
