@@ -9,8 +9,8 @@ places=(
 )
 smooth=3
 te_days=5
-pr_days=180
-pr_viz_days=10
+pr_days=365
+pr_viz_days=$te_days
 
 path=results/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
 mkdir --parents $path
