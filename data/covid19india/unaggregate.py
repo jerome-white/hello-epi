@@ -15,7 +15,7 @@ def func(args):
             .resample('D')
             .ffill()
             .diff()
-            .dropna()
+            .fillna(0)
             .clip(lower=0)
             .astype(int)
             .assign(**group._asdict()))
