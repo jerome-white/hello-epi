@@ -57,5 +57,6 @@ df = (pd
       .DataFrame
       .from_records(records(sys.stdin, args))
       .astype({ args.date_column: 'datetime64[D]' })
-      .set_index(args.date_column))
+      .set_index(args.date_column)
+      .rename(columns={ 'active': 'infected' }))
 df.to_csv(sys.stdout)
