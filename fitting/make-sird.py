@@ -56,10 +56,7 @@ if query:
 susceptible = Susceptible(args.population)
 df = (df
       .filter(items=compartments)
-      .clip(lower=0)
-      .assign(susceptible=susceptible)
-      .resample('D')
-      .sum())
+      .assign(susceptible=susceptible))
 
 #
 #
