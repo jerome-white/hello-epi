@@ -22,11 +22,11 @@ args = arguments.parse_args()
 #
 #
 index = 'date'
-compartments = {
-    'active': 'infected',
-    'deceased': 'deceased',
-    'recovered': 'recovered',
-}
+compartments = [
+    'infected',
+    'deceased',
+    'recovered',
+]
 usecols = [
     index,
     'state',
@@ -56,7 +56,6 @@ if query:
 susceptible = Susceptible(args.population)
 df = (df
       .filter(items=compartments)
-      .rename(columns=compartments)
       .clip(lower=0)
       .assign(susceptible=susceptible)
       .resample('D')
