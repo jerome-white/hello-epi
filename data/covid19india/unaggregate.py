@@ -12,8 +12,10 @@ def func(args):
 
     return (df
             .filter(items=['infected', 'recovered', 'deceased'])
+            .resample('D')
+            .ffill()
             .diff()
-            .dropna()
+            .fillna(0)
             .clip(lower=0)
             .astype(int)
             .assign(**group._asdict()))
