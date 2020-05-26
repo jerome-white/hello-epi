@@ -8,7 +8,7 @@ places=(
     maharashtra:mumbai:2851561
 )
 smooth=3
-tr_days=5
+te_days=5
 pr_days=180
 pr_viz_days=10
 
@@ -20,7 +20,7 @@ echo "[ `date` RESULTS ] $path"
 #
 #
 cat <<EOF > $path/README
-training days: $tr_days
+training days: $te_days
 smoothing: $smooth
 EOF
 
@@ -49,7 +49,7 @@ python $root/data/covid19india/get-data.sh |
 #
 rm --recursive --force $HOME/.theano/compiledir*
 python $root/data/covid19india/smooth.py --window $smooth < $path/raw.csv | \
-    head --lines=-$tr_days | \
+    head --lines=-$te_days | \
     python estimate.py > $path/params.csv
 
 #
@@ -70,7 +70,7 @@ for i in $pr_days $pr_viz_days; do
     cat <<EOF
 python visualize.py \
        --ground-truth $path/raw.csv \
-       --testing-days $tr_days \
+       --testing-days $te_days \
        --project $i \
        --output $path/$fname < \
        $path/projection.csv
