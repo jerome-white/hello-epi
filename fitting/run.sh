@@ -41,7 +41,7 @@ for i in ${places[@]}; do
     )
 done
 
-python $root/data/covid19india/state-wise-daily.py |
+python $root/data/covid19india/get-data.sh |
     python make-sird.py ${args[@]} > $path/raw.csv
 
 #
