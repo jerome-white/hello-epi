@@ -28,7 +28,7 @@ def relative(x):
 
 def tickfmt(x, pos, start):
     tick = start + pd.Timedelta(x, unit='D')
-    return tick.strftime('%d %b')
+    return tick.strftime('%d-%b')
 
 arguments = ArgumentParser()
 arguments.add_argument('--output', type=Path)
