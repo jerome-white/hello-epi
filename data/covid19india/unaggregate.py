@@ -12,6 +12,8 @@ def func(args):
 
     return (df
             .filter(items=['infected', 'recovered', 'deceased'])
+            .resample('D')
+            .ffill()
             .diff()
             .dropna()
             .clip(lower=0)
