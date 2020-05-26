@@ -21,7 +21,9 @@ def func(args):
             .assign(**group._asdict()))
 
 def each(fp):
-    df = pd.read_csv(sys.stdin, index_col='date', parse_dates=['date'])
+    index = 'date'
+    df = pd.read_csv(sys.stdin, index_col=index, parse_dates=[index])
+
     for (i, g) in df.groupby(list(Group._fields), sort=False):
         yield (Group(*i), g)
 
