@@ -38,9 +38,9 @@ fit = EpiFitter(epimodel, duration)
 #
 with pm.Model() as model:
     #
-    beta = pm.Uniform('beta', lower=constants.milli, upper=1)
-    gamma = pm.Uniform('gamma', lower=constants.micro, upper=1)
-    mu = pm.Uniform('mu', lower=constants.nano, upper=1)
+    beta = pm.Uniform('beta', lower=0, upper=10)
+    gamma = pm.Uniform('gamma', lower=0, upper=10)
+    mu = pm.Uniform('mu', lower=0, upper=10)
     solution = fit(y0.to_numpy().ravel(), (beta, gamma, mu))
 
     #
