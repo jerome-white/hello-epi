@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 
 import pymc3 as pm
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy import constants
 
 from util import EpiFitter, SIRD, Logger, dsplit
@@ -52,5 +53,5 @@ with pm.Model() as model:
     posterior = pm.sample(cores=args.workers, target_accept=0.95)
     pm.trace_to_dataframe(posterior).to_csv(sys.stdout, index=False)
     if args.trace is not None:
-        ax = pm.traceplot(posterior)
-        ax.get_figure().savefig(args.trace, bbox_inches='tight')
+        pm.traceplot(posterior)
+        plt.savefig(args.trace, bbox_inches='tight')
