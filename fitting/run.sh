@@ -50,7 +50,7 @@ $root/data/covid19india/get-data.sh |
 rm --recursive --force $HOME/.theano/compiledir*
 python $root/data/covid19india/smooth.py --window $smooth < $path/raw.csv | \
     head --lines=-$te_days | \
-    python estimate.py > $path/params.csv || exit
+    python estimate.py --trace $path/trace.png > $path/params.csv || exit
 
 #
 #
