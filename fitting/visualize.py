@@ -32,16 +32,17 @@ def xtickfmt(x, pos, start):
 
 # https://stackoverflow.com/a/1205664
 def ytickfmt(x, pos):
-    support = reversed([
-        ( 0,  ''),
-        ( 3, 'K'),
-        ( 6, 'M'),
-        ( 9, 'B'),
-        (12, 'T'),
-    ])
-
     y = abs(x)
-    for (i, j) in support:
+    support = (
+         '',
+	'K',
+	'M',
+	'B',
+	'T',
+    )
+    iterable = it.starmap(lambda x, y: (x * 3, y), enumerate(support))
+
+    for (i, j) in reversed(list(iterable)):
         mag = 10 ** i
         if y >= mag:
             return '{:.0f}{}'.format(x / mag, j)
