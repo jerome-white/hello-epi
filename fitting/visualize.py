@@ -26,9 +26,25 @@ def relative(x):
             .apply(lambda y: y.total_seconds() / constants.day)
             .to_numpy())
 
-def tickfmt(x, pos, start):
+def xtickfmt(x, pos, start):
     tick = start + pd.Timedelta(x, unit='D')
     return tick.strftime('%d-%b')
+
+# https://stackoverflow.com/a/1205664
+def ytickfmt(x, pos):
+    support = reversed([
+        ( 0,  ''),
+        ( 3, 'K'),
+        ( 6, 'M'),
+        ( 9, 'B'),
+        (12, 'T'),
+    ])
+
+    y = abs(x)
+    for (i, j) in support:
+        mag = 10 ** i
+        if y >= mag:
+            return '{:.0f}{}'.format(x / mag, j)
 
 arguments = ArgumentParser()
 arguments.add_argument('--output', type=Path)
@@ -74,7 +90,8 @@ pr = pr.melt(id_vars=[index], value_vars=compartments, var_name=by)
 #
 #
 (_, axes) = plt.subplots(nrows=len(compartments), sharex=True) #, sharey=True)
-ticker = plt.FuncFormatter(ft.partial(tickfmt, start=gt.index.min()))
+xticker = plt.FuncFormatter(ft.partial(xtickfmt, start=gt.index.min()))
+yticker = plt.FuncFormatter(ytickfmt)
 for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
     Logger.info(c)
 
@@ -99,5 +116,6 @@ for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
     ax.grid(which='both')
     ax.set_ylabel(c.title())
     ax.xaxis.label.set_visible(False)
-    ax.xaxis.set_major_formatter(ticker)
+    ax.xaxis.set_major_formatter(xticker)
+    ax.yaxis.set_major_formatter(yticker)
 plt.savefig(args.output)
