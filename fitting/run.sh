@@ -10,9 +10,15 @@ OUTPUT=results/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
 #
 #
 places=(
-    maharashtra:pune:13671091
-    maharashtra:mumbai:2851561
+    # maharashtra:pune:13671091  # FB (district)
+    # maharashtra:pune:312445    # Wikipedia (city)
+    # maharashtra:pune:5057709   # Wikipedia (greater)
+    # maharashtra:mumbai:2851561 # FB (district)
 )
+if [ ${#places[@]} -eq 0 ]; then
+    exit 1
+fi
+
 pfrac=0.2
 smooth=7
 te_days=5
