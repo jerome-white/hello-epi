@@ -64,3 +64,26 @@ class SIRD(EpiModel):
         dI = dS - dR - dD
 
         return [ -dS, dI, dR, dD, ]
+
+class IRD(EpiModel):
+    _compartments = (
+        'infected',
+        'recovered',
+        'deceased',
+    )
+
+    _parameters = (
+        'N',
+        'beta',
+        'gamma',
+        'mu',
+    )
+
+    def __call__(self, y, t, p):
+        I = y[1]
+
+        dR = p[2] * I
+        dD = p[3] * I
+        dI = p[1] * I * p[0] - dR - dD
+
+        return [ dI, dR, dD, ]
