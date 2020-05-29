@@ -32,29 +32,10 @@ def func(incoming, outgoing, args):
                          columns=model._compartments,
                          index=range(args.outlook))
               .reset_index()
-              .rename(columns={'index': 'day'}))
+              .rename(columns={'index': 'day'})
+              .to_dict(orient='records'))
 
         outgoing.put(df)
-
-def each(args, fp):
-    incoming = Queue()
-    outgoing = Queue()
-    initargs = (
-        outgoing,
-        incoming,
-        args,
-    )
-
-    with Pool(args.workers, func, initargs):
-        records = 0
-        reader = csv.DictReader(fp)
-        for row in reader:
-            outgoing.put({ x: float(y) for (x, y) in row.items() })
-            records += 1
-
-        for _ in range(records):
-            result = incoming.get()
-            yield result
 
 arguments = ArgumentParser()
 arguments.add_argument('--data', type=Path)
@@ -62,4 +43,26 @@ arguments.add_argument('--outlook', type=int)
 arguments.add_argument('--workers', type=int)
 args = arguments.parse_args()
 
-pd.concat(each(args, sys.stdin)).to_csv(sys.stdout, index=False)
+incoming = Queue()
+outgoing = Queue()
+initargs = (
+    outgoing,
+    incoming,
+    args,
+)
+
+with Pool(args.workers, func, initargs):
+    records = 0
+    reader = csv.DictReader(sys.stdin)
+    for row in reader:
+        outgoing.put({ x: float(y) for (x, y) in row.items() })
+        records += 1
+
+    writer = None
+    for _ in range(records):
+        result = incoming.get()
+        if writer is None:
+            head = result[0]
+            writer = csv.DictWriter(sys.stdout, fieldnames=head.keys())
+            writer.writeheader()
+        writer.writerows(result)
