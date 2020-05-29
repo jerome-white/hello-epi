@@ -6,18 +6,19 @@ from multiprocessing import Pool, Queue
 
 import pandas as pd
 
-from util import EpiFitter, SIRD, Logger
+from util import EpiFitter, Logger
+from util import SIRD as EpiModel
 
-def func(incoming, outgoing, args):
+def func(incoming, outgoing, args, Model):
     index = 'date'
     y0 = (pd
           .read_csv(args.data, index_col=index, parse_dates=[index])
-          .reindex(columns=SIRD._compartments)
+          .reindex(columns=EpiModel._compartments)
           .sort_index()
           .iloc[0]
           .to_numpy())
 
-    model = SIRD(y0.sum())
+    model = EpiModel(N=y0.sum())
     fit = EpiFitter(model, args.outlook)
 
     while True:

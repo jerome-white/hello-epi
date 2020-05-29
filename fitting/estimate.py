@@ -9,7 +9,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import constants
 
-from util import EpiFitter, SIRD, Logger, dsplit
+from util import EpiFitter, Logger, dsplit
+from util import SIRD as EpiModel
 
 arguments = ArgumentParser()
 arguments.add_argument('--trace', type=Path)
@@ -21,13 +22,13 @@ args = arguments.parse_args()
 #
 df = (pd
       .read_csv(sys.stdin, index_col='date', parse_dates=True)
-      .reindex(columns=SIRD._compartments))
+      .reindex(columns=EpiModel._compartments))
 (y0, observed) = dsplit(df, len(df) - 2)
 
 #
 # Initialise the model
 #
-epimodel = SIRD(y0.squeeze().sum())
+epimodel = EpiModel(N=y0.squeeze().sum())
 
 span = df.index.max() - df.index.min()
 duration = round(span.total_seconds() / constants.day)

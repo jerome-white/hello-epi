@@ -35,6 +35,9 @@ class EpiModel:
     _compartments = None
     _parameters = None
 
+    def __init__(self, *args, **kwargs):
+        pass
+
     def __call__(self, y, t, p):
         raise NotImplementedError()
 
@@ -52,8 +55,8 @@ class SIRD(EpiModel):
         'mu',
     )
 
-    def __init__(self, N):
-        self.N = N
+    def __init__(self, *args, **kwargs):
+        self.N = kwargs['N'] if 'N' in kwargs else args[0]
 
     def __call__(self, y, t, p):
         I = y[1]
