@@ -9,8 +9,8 @@ args = arguments.parse_args()
 
 df = (pd
       .read_csv(sys.stdin, index_col='date', parse_dates=['date'])
-      .rolling(args.window, center=True, win_type='gaussian')
-      .mean(std=1)
+      .rolling(args.window, center=True)
+      .mean()
       .dropna()
       .round()
       .astype(int))
