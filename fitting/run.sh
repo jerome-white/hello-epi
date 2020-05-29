@@ -7,7 +7,8 @@ places=(
     maharashtra:pune:13671091
     maharashtra:mumbai:2851561
 )
-smooth=3
+pfrac=0.2
+smooth=7
 te_days=5
 pr_days=365
 pr_viz_days=$te_days
@@ -31,12 +32,13 @@ done >> $path/README
 #
 # Get the data
 #
+test $pfrac || pfrac=1
 for i in ${places[@]}; do
     opts=( `sed -e's/:/ /g' <<< $i` )
     args=(
 	--state ${opts[0]}
 	--district ${opts[1]}
-	--population ${opts[2]}
+	--population $(printf "%.0f" `bc --mathlib <<< "${opts[2]} * $pfrac"`)
 	${args[@]}
     )
 done
