@@ -4,7 +4,8 @@ export PYTHONLOGLEVEL=info
 
 ROOT=`git rev-parse --show-toplevel`
 DATA=$ROOT/data/covid19india
-OUTPUT=results/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
+RESULTS=results
+OUTPUT=$RESULTS/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
 
 #
 #
@@ -25,10 +26,11 @@ te_days=5
 pr_days=365
 pr_viz_days=$te_days
 
+#
+#
+#
+# python clean.py --results $RESULTS
 
-#
-#
-#
 mkdir --parents $OUTPUT
 echo "[ `date` RESULTS ] $OUTPUT"
 
