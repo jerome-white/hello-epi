@@ -9,22 +9,23 @@ import pandas as pd
 from util import EpiFitter, SIRD, Logger
 
 def func(incoming, outgoing, args):
-    initial = (pd
-               .read_csv(args.initial)
-               .to_dict(orient='records')
-               .pop())
-    model = SIRD(sum(initial.values()))
-    y0 = [ initial[x] for x in model._compartments ]
+    index = 'date'
+    y0 = (pd
+          .read_csv(args.data, index_col=index, parse_dates=[index])
+          .reindex(columns=SIRD._compartments)
+          .sort_index()
+          .iloc[0]
+          .to_numpy())
+
+    model = SIRD(y0.sum())
     fit = EpiFitter(model, args.outlook)
 
     while True:
         params = incoming.get()
-
         theta = [ params[x] for x in model._parameters ]
         Logger.info(
             ' '.join(map(': '.join, zip(model._parameters, map(str, theta))))
         )
-
         data = fit(y0, theta).eval()
         df = (pd
               .DataFrame(data=data,
@@ -56,7 +57,7 @@ def each(args, fp):
             yield result
 
 arguments = ArgumentParser()
-arguments.add_argument('--initial', type=Path)
+arguments.add_argument('--data', type=Path)
 arguments.add_argument('--outlook', type=int)
 arguments.add_argument('--workers', type=int)
 args = arguments.parse_args()
