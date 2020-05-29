@@ -57,6 +57,10 @@ susceptible = Susceptible(args.population)
 df = (df
       .filter(items=compartments)
       .assign(susceptible=susceptible))
+if df['susceptible'].le(0).any():
+    threshold = df[compartments].sum(axis='columns').max()
+    raise ValueError('Specified population too low: {} < {}'
+                     .format(args.population, threshold))
 
 #
 #
