@@ -15,7 +15,7 @@ def func(args):
             .resample('D')
             .ffill())
     if dis:
-        view = view.diff().fillna(0)
+        view = view.diff().dropna()
     view = (view
             .clip(lower=0)
             .astype(int)
