@@ -56,7 +56,12 @@ class SIRD(EpiModel):
     )
 
     def __init__(self, *args, **kwargs):
-        self.N = kwargs['N'] if 'N' in kwargs else args[0]
+        if 'N' in kwargs:
+            self.N = kwargs['N']
+        elif not args:
+            raise ValueError('Must supply population')
+        else:
+            self.N = args[0]
 
     def __call__(self, y, t, p):
         I = y[1]
