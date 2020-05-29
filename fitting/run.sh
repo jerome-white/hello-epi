@@ -2,7 +2,13 @@
 
 export PYTHONLOGLEVEL=info
 
-root=`git rev-parse --show-toplevel`
+ROOT=`git rev-parse --show-toplevel`
+DATA=$ROOT/data/covid19india
+OUTPUT=results/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
+
+#
+#
+#
 places=(
     maharashtra:pune:13671091
     maharashtra:mumbai:2851561
@@ -13,21 +19,21 @@ te_days=5
 pr_days=365
 pr_viz_days=$te_days
 
-path=results/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
-mkdir --parents $path
-echo "[ `date` RESULTS ] $path"
 
 #
 #
 #
-cat <<EOF > $path/README
+mkdir --parents $OUTPUT
+echo "[ `date` RESULTS ] $OUTPUT"
+
+cat <<EOF > $OUTPUT/README
 training days: $te_days
 smoothing: $smooth
 EOF
 
 for i in ${places[@]}; do
     echo "location: $i"
-done >> $path/README
+done >> $OUTPUT/README
 
 #
 # Get the data
@@ -43,42 +49,42 @@ for i in ${places[@]}; do
     )
 done
 
-$root/data/covid19india/get-data.sh |
-    python make-sird.py ${args[@]} > $path/raw.csv
+python $DATA/state-wise-daily.py | \
+    python $DATA/clean.py --disaggregate | \
+    python make-sird.py ${args[@]} > \
+	   $OUTPUT/raw.csv || exit
 
 #
 #
 #
 rm --recursive --force $HOME/.theano/compiledir*
 if [ $smooth ]; then
-    python $root/data/covid19india/smooth.py --window $smooth < $path/raw.csv
+    python $DATA/smooth.py --window $smooth
 else
-    cat $path/raw.csv
-fi | \
+    tee
+fi < $OUTPUT/raw.csv | \
     head --lines=-$te_days | \
-    python estimate.py --trace $path/trace.png > $path/params.csv || exit
+    python estimate.py --trace $OUTPUT/trace.png > \
+	   $OUTPUT/params.csv || exit
 
 #
 #
 #
-init=`mktemp`
-head --lines=2 $path/raw.csv | cut --delimiter=',' --fields=2- > $init
-days=`tail --lines=+2 $path/raw.csv | \
+days=`tail --lines=+2 $OUTPUT/raw.csv | \
 	   wc --lines | \
 	   cut --delimiter=' ' --fields=1`
-python project.py --initial $init --outlook `expr $days + $pr_days` < \
-       $path/params.csv > \
-       $path/projection.csv
-rm $init
+python project.py --data $OUTPUT/raw.csv --outlook `expr $days + $pr_days` < \
+       $OUTPUT/params.csv > \
+       $OUTPUT/projection.csv
 
 for i in $pr_days $pr_viz_days; do
     fname=`printf "fit-%03d.png" $i`
     cat <<EOF
 python visualize.py \
-       --ground-truth $path/raw.csv \
+       --ground-truth $OUTPUT/raw.csv \
        --testing-days $te_days \
        --project $i \
-       --output $path/$fname < \
-       $path/projection.csv
+       --output $OUTPUT/$fname < \
+       $OUTPUT/projection.csv
 EOF
 done | parallel --will-cite --line-buffer
