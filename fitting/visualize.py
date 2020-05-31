@@ -100,7 +100,6 @@ for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
 
     sns.lineplot(x=index,
                  y='value',
-                 hue=by,
                  data=g,
                  legend=False,
                  ax=ax)
