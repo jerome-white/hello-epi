@@ -106,8 +106,7 @@ for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
 
     view = gt.query('variable == "{}"'.format(c))
     n_colors = len(view['split'].unique())
-    palette = sns.color_palette(palette='Set2',
-                                n_colors=n_colors)
+    palette = sns.color_palette(palette='Set2', n_colors=n_colors)
     sns.scatterplot(x='days',
                     y='value',
                     hue='split',
@@ -115,6 +114,7 @@ for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
                     legend=False,
                     palette=palette,
                     ax=ax)
+
     ax.grid(which='both')
     ax.set_ylabel(c.title())
     ax.xaxis.label.set_visible(False)
