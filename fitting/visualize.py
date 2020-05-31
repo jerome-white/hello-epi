@@ -94,6 +94,7 @@ pr = pr.melt(id_vars=[index], value_vars=compartments, var_name=by)
 
 xticker = plt.FuncFormatter(ft.partial(xtickfmt, start=gt.index.min()))
 yticker = plt.FuncFormatter(ytickfmt)
+
 for (ax, (c, g)) in zip(axes, pr.groupby(by, sort=False)):
     Logger.info(c)
 
