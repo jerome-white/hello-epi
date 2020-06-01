@@ -24,7 +24,7 @@ fi
 pfrac=0.2
 smooth=7
 te_days=5
-pr_days=365
+pr_days=180
 pr_viz_days=$te_days
 
 #
