@@ -94,10 +94,13 @@ python estimate.py $mcopts \
 #
 #
 #
-days=`tail --lines=+2 $OUTPUT/raw.csv | \
+days=`tail --lines=+2 $OUTPUT/cooked.csv | \
 	   wc --lines | \
 	   cut --delimiter=' ' --fields=1`
-python project.py --data $OUTPUT/raw.csv --outlook `expr $days + $pr_days` < \
+python project.py \
+       --population $population \
+       --data $OUTPUT/training.csv \
+       --outlook `expr $days + $pr_days` < \
        $OUTPUT/params.csv > \
        $OUTPUT/projection.csv
 
