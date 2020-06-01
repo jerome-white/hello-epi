@@ -47,15 +47,17 @@ done >> $OUTPUT/README
 #
 # Get the data
 #
-test $pfrac || pfrac=1
+
+population=0
 for i in ${places[@]}; do
     opts=( `sed -e's/:/ /g' <<< $i` )
     args=(
 	--state ${opts[0]}
 	--district ${opts[1]}
-	--population $(printf "%.0f" `bc --mathlib <<< "${opts[2]} * $pfrac"`)
+	--population ${opts[2]}
 	${args[@]}
     )
+    population=`expr ${opts[2]} + $population` # for later
 done
 
 python $DATA/state-wise-daily.py | \
