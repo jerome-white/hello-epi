@@ -83,7 +83,7 @@ class IRD(EpiModel):
     def __call__(self, y, t, p):
         I = y[0]
 
-        dS = p[1] * I * p[0]
+        dS = (p[1] * I * p[0]) / self.N
         dR = p[2] * I
         dD = p[3] * I
         dI = dS - dR - dD
