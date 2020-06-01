@@ -78,10 +78,18 @@ if [ $smooth ]; then
     python $DATA/smooth.py --window $smooth
 else
     tee
-fi < $OUTPUT/raw.csv | \
-    head --lines=-$te_days | \
-    python estimate.py --trace $OUTPUT/trace.png > \
-	   $OUTPUT/params.csv || exit
+fi < $OUTPUT/cooked.csv | \
+    head --lines=-$te_days > $OUTPUT/training.csv
+
+# PyMC3 has trouble with long chains. Uncomment the following line,
+# and possibly play with the values, to help manage sample length.
+# mcopts=--workers $(printf "%.0f" $(bc -l <<< "$(nproc) * 0.7")) --draws 1000
+python estimate.py $mcopts \
+       --population $population \
+       --trace $OUTPUT/trace.png < \
+       $OUTPUT/training.csv > \
+       $OUTPUT/params.csv \
+    || exit
 
 #
 #
