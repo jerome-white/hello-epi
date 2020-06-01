@@ -36,8 +36,8 @@ class EpiModel:
     _compartments = None
     _parameters = None
 
-    def __init__(self, *args, **kwargs):
-        pass
+    def __init__(self, N):
+        self.N = N
 
     def __call__(self, y, t, p):
         raise NotImplementedError()
@@ -55,14 +55,6 @@ class SIRD(EpiModel):
         'gamma',
         'mu',
     )
-
-    def __init__(self, *args, **kwargs):
-        if 'N' in kwargs:
-            self.N = kwargs['N']
-        elif not args:
-            raise ValueError('Must supply population')
-        else:
-            self.N = args[0]
 
     def __call__(self, y, t, p):
         I = y[1]
@@ -82,7 +74,7 @@ class IRD(EpiModel):
     )
 
     _parameters = (
-        'N',
+        'S',
         'beta',
         'gamma',
         'mu',
