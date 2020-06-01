@@ -104,6 +104,10 @@ python project.py \
        $OUTPUT/params.csv > \
        $OUTPUT/projection.csv
 
+#
+#
+#
+tmp=`mktemp`
 for i in $pr_days $pr_viz_days; do
     fname=`printf "fit-%03d.png" $i`
     cat <<EOF
@@ -114,4 +118,14 @@ python visualize.py \
        --output $OUTPUT/$fname < \
        $OUTPUT/projection.csv
 EOF
-done | parallel --will-cite --line-buffer
+done > $tmp
+cat <<EOF >> $tmp
+python accumulate.py < $OUTPUT/projection.csv | \
+    python visualize.py \
+	   --ground-truth $OUTPUT/raw.csv \
+	   --testing-days $te_days \
+	   --project $pr_viz_days \
+	   --output $OUTPUT/cummulative.png
+EOF
+parallel --will-cite --line-buffer :::: $tmp
+rm $tmp
