@@ -1,5 +1,6 @@
 import sys
 import csv
+import warnings
 from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool, Queue
@@ -7,9 +8,10 @@ from multiprocessing import Pool, Queue
 import pandas as pd
 
 from util import EpiFitter, Logger
-from util import SIRD as EpiModel
+# from util import SIRD as EpiModel
+from util import IRD as EpiModel
 
-def func(incoming, outgoing, args, Model):
+def func(incoming, outgoing, args):
     index = 'date'
     y0 = (pd
           .read_csv(args.data, index_col=index, parse_dates=[index])
@@ -17,12 +19,15 @@ def func(incoming, outgoing, args, Model):
           .sort_index()
           .iloc[0]
           .to_numpy())
+    if args.population != y0.sum():
+        warnings.warn('Population mismatch: {} vs {}'
+                      .format(args.population, y0.sum()))
 
-    model = EpiModel(N=y0.sum())
+    model = EpiModel(args.population)
     fit = EpiFitter(model, args.outlook)
 
     while True:
-        params = incoming.get()
+        (order, params) = incoming.get()
         theta = [ params[x] for x in model._parameters ]
         Logger.info(
             ' '.join(map(': '.join, zip(model._parameters, map(str, theta))))
@@ -33,6 +38,7 @@ def func(incoming, outgoing, args, Model):
                          columns=model._compartments,
                          index=range(args.outlook))
               .reset_index()
+              .assign(run=order)
               .rename(columns={'index': 'day'})
               .to_dict(orient='records'))
 
@@ -40,6 +46,7 @@ def func(incoming, outgoing, args, Model):
 
 arguments = ArgumentParser()
 arguments.add_argument('--data', type=Path)
+arguments.add_argument('--population', type=int)
 arguments.add_argument('--outlook', type=int)
 arguments.add_argument('--workers', type=int)
 args = arguments.parse_args()
@@ -55,8 +62,9 @@ initargs = (
 with Pool(args.workers, func, initargs):
     records = 0
     reader = csv.DictReader(sys.stdin)
-    for row in reader:
-        outgoing.put({ x: float(y) for (x, y) in row.items() })
+    for (i, row) in enumerate(reader):
+        r = { x: float(y) for (x, y) in row.items() }
+        outgoing.put((i, r))
         records += 1
 
     writer = None
