@@ -108,7 +108,7 @@ for i in $pr_days $pr_viz_days; do
     fname=`printf "fit-%03d.png" $i`
     cat <<EOF
 python visualize.py \
-       --ground-truth $OUTPUT/raw.csv \
+       --ground-truth $OUTPUT/cooked.csv \
        --testing-days $te_days \
        --project $i \
        --output $OUTPUT/$fname < \
