@@ -14,14 +14,14 @@ places=(
     # maharashtra:pune:13671091  # FB (district)
     # maharashtra:pune:312445    # Wikipedia (city)
     # maharashtra:pune:5057709   # Wikipedia (greater)
-    # maharashtra:mumbai:2851561 # FB (district)
+    maharashtra:mumbai:2851561 # FB (district)
 )
 if [ ${#places[@]} -eq 0 ]; then
     echo "Must specify at least one location" 1>&2
     exit 1
 fi
 
-pfrac=0.2
+disaggregate=
 smooth=7
 te_days=5
 pr_days=180
@@ -61,9 +61,14 @@ for i in ${places[@]}; do
 done
 
 python $DATA/state-wise-daily.py | \
-    python $DATA/clean.py --disaggregate | \
-    python make-sird.py ${args[@]} > \
-	   $OUTPUT/raw.csv || exit
+    python $DATA/clean.py | \
+    python make-sird.py ${args[@]} > $OUTPUT/raw.csv || exit
+
+if [ $disaggregate ]; then
+    python disaggregate.py < $OUTPUT/raw.csv > $OUTPUT/cooked.csv
+else
+    ln --symbolic --relative $OUTPUT/raw.csv $OUTPUT/cooked.csv
+fi
 
 #
 #
