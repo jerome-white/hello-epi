@@ -51,6 +51,7 @@ arguments = ArgumentParser()
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--ground-truth', type=Path)
 arguments.add_argument('--project', type=int)
+arguments.add_argument('--sample', type=int)
 arguments.add_argument('--testing-days', type=int)
 arguments.add_argument('--with-susceptible', action='store_true')
 args = arguments.parse_args()
@@ -69,6 +70,14 @@ gt = (pd
 #
 #
 #
+pr = pd.read_csv(sys.stdin)
+
+if args.sample is not None:
+    col = 'run'
+    a = pr[col].unique()
+    sample = np.random.choice(a, size=args.sample, replace=False)
+    pr = pr.query('{} in @sample'.format(col))
+
 index = 'day'
 compartments = cl.deque([
     'infected',
@@ -77,12 +86,13 @@ compartments = cl.deque([
 ])
 if args.with_susceptible:
     compartments.appendleft('susceptible')
-usecols = list(it.chain(compartments, [index]))
-pr = pd.read_csv(sys.stdin, usecols=usecols)
+pr = pr.filter(items=it.chain(compartments, [index]))
+
 if args.project is not None:
     diff = gt.index.max() - gt.index.min()
     days = math.ceil(diff.total_seconds() / constants.day)
     pr = pr.query('day <= {}'.format(days + args.project))
+
 compartments = list(it.filterfalse(lambda x: x == index, pr.columns))
 by = 'compartment'
 pr = pr.melt(id_vars=[index], value_vars=compartments, var_name=by)
