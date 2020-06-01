@@ -2,6 +2,8 @@ from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool
 
+from util import Logger
+
 def func(args):
     contents = list(args.iterdir())
     if not any([ x.suffix.endswith('png') for x in contents ]):
@@ -18,4 +20,4 @@ args = arguments.parse_args()
 
 with Pool(args.workers) as pool:
     for i in filter(None, pool.imap_unordered(func, args.results.iterdir())):
-        print(i)
+        Logger.warning('Cleaning {}'.format(i))
