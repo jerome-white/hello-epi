@@ -17,6 +17,7 @@ places=(
     # maharashtra:mumbai:2851561 # FB (district)
 )
 if [ ${#places[@]} -eq 0 ]; then
+    echo "Must specify at least one location" 1>&2
     exit 1
 fi
 
