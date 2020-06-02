@@ -57,7 +57,8 @@ for i in ${places[@]}; do
 	--population ${opts[2]}
 	${args[@]}
     )
-    population=`expr ${opts[2]} + $population` # for later
+    # accumulate for later
+    population=`expr ${opts[2]} + $population`
 done
 
 python $DATA/state-wise-daily.py | \
