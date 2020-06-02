@@ -120,7 +120,9 @@ python visualize.py \
        $OUTPUT/projection.csv
 EOF
 done > $tmp
-cat <<EOF >> $tmp
+
+if [ $disaggregate ]; then
+    cat <<EOF >> $tmp
 python accumulate.py < $OUTPUT/projection.csv | \
     python visualize.py \
 	   --ground-truth $OUTPUT/raw.csv \
@@ -128,5 +130,7 @@ python accumulate.py < $OUTPUT/projection.csv | \
 	   --project $pr_viz_days \
 	   --output $OUTPUT/cummulative.png
 EOF
+fi
+
 parallel --will-cite --line-buffer :::: $tmp
 rm $tmp
