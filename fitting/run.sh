@@ -38,11 +38,8 @@ echo "[ `date` RESULTS ] $OUTPUT"
 cat <<EOF > $OUTPUT/README
 training days: $te_days
 smoothing: $smooth
+disaggregate: $disaggregate
 EOF
-
-for i in ${places[@]}; do
-    echo "location: $i"
-done >> $OUTPUT/README
 
 #
 # Get the data
@@ -60,6 +57,9 @@ for i in ${places[@]}; do
     # accumulate for later
     population=`expr ${opts[2]} + $population`
 done
+cat <<EOF >> $OUTPUT/README
+make-sird: ${args[@]}
+EOF
 
 python $DATA/state-wise-daily.py | \
     python $DATA/clean.py | \
