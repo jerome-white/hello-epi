@@ -34,8 +34,8 @@ y0 = df.iloc[0]
 # Initialise the model
 #
 if args.population != y0.sum():
-    warnings.warn('Population mismatch: {} vs {}'
-                  .format(args.population, y0.sum()))
+    msg = 'Population mismatch: {} vs {} ({})'
+    warnings.warn(msg.format(args.population, y0.sum(), y0.to_dict()))
 epimodel = EpiModel(args.population)
 
 span = df.index.max() - df.index.min()
