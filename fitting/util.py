@@ -3,6 +3,7 @@ import logging
 import collections as cl
 
 import pandas as pd
+from scipy import constants
 from pymc3.ode import DifferentialEquation
 
 lvl = os.environ.get('PYTHONLOGLEVEL', 'WARNING').upper()
@@ -12,12 +13,29 @@ logging.getLogger('matplotlib').setLevel(logging.CRITICAL)
 logging.captureWarnings(True)
 Logger = logging.getLogger(__name__)
 
-Split = cl.namedtuple('Split', 'train, test')
-def dsplit(df, outlook):
-    y = df.index.max() - pd.DateOffset(days=outlook)
-    x = y - pd.DateOffset(days=1)
+class DataHandler:
+    def __init__(self, df):
+        self.df = df
 
-    return Split(df.loc[:str(x)], df.loc[str(y):])
+    def head(self):
+        return self.df.iloc[0]
+
+    def tail(self):
+        return type(self)(self.df.iloc[1:])
+
+    def __len__(self):
+        span = self.df.index.max() - self.df.index.min()
+        return round(span.total_seconds() / constants.day) + 1
+
+    @classmethod
+    def from_csv(cls, fp, index='date', compartments=None):
+        df = (pd
+              .read_csv(fp, index_col=index, parse_dates=[index])
+              .sort_index())
+        if compartments is not None:
+            df = df.reindex(columns=compartments)
+
+        return cls(df)
 
 #
 #
