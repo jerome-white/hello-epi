@@ -10,9 +10,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import constants
 
-from util import EpiFitter, Logger, dsplit
-# from util import SIRD as EpiModel
-from util import IRD as EpiModel
+from util import EpiFitter, Logger, DataHandler
+from util import SIRD as EpiModel
+# from util import IRD as EpiModel
 
 arguments = ArgumentParser()
 arguments.add_argument('--draws', type=int, default=1000)
@@ -25,10 +25,9 @@ args = arguments.parse_args()
 #
 # Aquire the data
 #
-df = (pd
-      .read_csv(sys.stdin, index_col='date', parse_dates=True)
-      .reindex(columns=EpiModel._compartments))
-y0 = df.iloc[0]
+handler = DataHandler.from_csv(sys.stdin, compartments=EpiModel._compartments)
+y0 = handler.head()
+observed = handler.tail()
 
 #
 # Initialise the model
@@ -37,10 +36,7 @@ if args.population != y0.sum():
     msg = 'Population mismatch: {} vs {} ({})'
     warnings.warn(msg.format(args.population, y0.sum(), y0.to_dict()))
 epimodel = EpiModel(args.population)
-
-span = df.index.max() - df.index.min()
-duration = round(span.total_seconds() / constants.day) + 1
-fit = EpiFitter(epimodel, duration)
+fit = EpiFitter(epimodel, len(observed))
 
 #
 # Explore!
@@ -58,13 +54,13 @@ with pm.Model() as model:
         pm.Uniform('gamma', lower=0, upper=1),
         pm.Uniform('mu', lower=0, upper=1),
     )
-    solution = fit(y0.to_numpy().ravel(), theta)
+    solution = fit(y0, theta)
 
     #
     sigma = pm.HalfNormal('sigma',
-                          sigma=df.std(),
+                          sigma=observed.df.std(),
                           shape=len(epimodel._compartments))
-    Y = pm.Normal('Y', mu=solution, sigma=sigma, observed=df)
+    Y = pm.Normal('Y', mu=solution, sigma=sigma, observed=observed.df)
 
     #
     posterior = pm.sample(draws=args.draws,

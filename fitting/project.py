@@ -7,18 +7,14 @@ from multiprocessing import Pool, Queue
 
 import pandas as pd
 
-from util import EpiFitter, Logger
-# from util import SIRD as EpiModel
-from util import IRD as EpiModel
+from util import EpiFitter, Logger, DataHandler
+from util import SIRD as EpiModel
+# from util import IRD as EpiModel
 
 def func(incoming, outgoing, args):
-    index = 'date'
-    y0 = (pd
-          .read_csv(args.data, index_col=index, parse_dates=[index])
-          .reindex(columns=EpiModel._compartments)
-          .sort_index()
-          .iloc[0]
-          .to_numpy())
+    y0 = (DataHandler
+          .from_csv(args.data, compartments=EpiModel._compartments)
+          .head())
     if args.population != y0.sum():
         warnings.warn('Population mismatch: {} vs {}'
                       .format(args.population, y0.sum()))
