@@ -27,26 +27,18 @@ compartments = [
     'deceased',
     'recovered',
 ]
-usecols = [
-    index,
-    'state',
-    'district',
-]
-usecols.extend(compartments)
-df = pd.read_csv(sys.stdin,
-                 index_col=index,
-                 parse_dates=[index],
-                 usecols=usecols)
+df = pd.read_csv(sys.stdin, index_col=index, parse_dates=[index])
 
 #
 #
 #
 query = []
 for i in ('state', 'district'):
-    value = getattr(args, i)
-    if value:
-        j = ','.join(map('"{}"'.format, value))
-        query.append('{} in ({})'.format(i, j))
+    if i in df.columns:
+        value = getattr(args, i)
+        if value:
+            j = ','.join(map('"{}"'.format, value))
+            query.append('{} in ({})'.format(i, j))
 if query:
     df = df.query(' and '.join(query))
 
