@@ -76,7 +76,8 @@ fi
 #
 rm --recursive --force $HOME/.theano/compiledir*
 if [ $smooth ]; then
-    python $DATA/smooth.py --window $smooth
+    python $DATA/smooth.py --window $smooth | \
+	python make-sird.py ${args[@]}
 else
     tee
 fi < $OUTPUT/cooked.csv | \
