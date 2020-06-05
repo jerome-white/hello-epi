@@ -15,7 +15,7 @@ class Susceptible:
 arguments = ArgumentParser()
 arguments.add_argument('--state', action='append')
 arguments.add_argument('--district', action='append')
-arguments.add_argument('--population', type=int, required=True)
+arguments.add_argument('--population', action='append', type=int)
 args = arguments.parse_args()
 
 #
@@ -53,14 +53,16 @@ if query:
 #
 #
 #
-susceptible = Susceptible(args.population)
+population = sum(args.population)
+susceptible = Susceptible(population)
 df = (df
       .filter(items=compartments)
       .assign(susceptible=susceptible))
+
 if df['susceptible'].le(0).any():
     threshold = df[compartments].sum(axis='columns').max()
     raise ValueError('Specified population too low: {} < {}'
-                     .format(args.population, threshold))
+                     .format(population, threshold))
 
 #
 #
