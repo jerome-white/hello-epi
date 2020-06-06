@@ -14,7 +14,7 @@ places=(
     # maharashtra:pune:13671091  # FB (district)
     # maharashtra:pune:312445    # Wikipedia (city)
     # maharashtra:pune:5057709   # Wikipedia (greater)
-    maharashtra:mumbai:2851561 # FB (district)
+    # maharashtra:mumbai:2851561 # FB (district)
 )
 if [ ${#places[@]} -eq 0 ]; then
     echo "Must specify at least one location" 1>&2
