@@ -24,13 +24,15 @@ fi
 disaggregate=
 smooth=7
 te_days=5
-pr_days=180
+pr_days=90
 pr_viz_days=$te_days
 
 #
 #
 #
-# python $ROOT/scripts/clean-results.py --results $RESULTS
+if [ -d $RESULTS ]; then
+    python $ROOT/scripts/clean-results.py --results $RESULTS
+fi
 
 mkdir --parents $OUTPUT
 echo "[ `date` RESULTS ] $OUTPUT"
