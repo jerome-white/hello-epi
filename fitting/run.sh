@@ -3,8 +3,8 @@
 export PYTHONLOGLEVEL=info
 
 ROOT=`git rev-parse --show-toplevel`
-DATA=$ROOT/data/covid19india
-RESULTS=results
+DATA=$ROOT/data
+RESULTS=$ROOT/results
 OUTPUT=$RESULTS/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
 
 #
@@ -14,7 +14,7 @@ places=(
     # maharashtra:pune:13671091  # FB (district)
     # maharashtra:pune:312445    # Wikipedia (city)
     # maharashtra:pune:5057709   # Wikipedia (greater)
-    maharashtra:mumbai:2851561 # FB (district)
+    # maharashtra:mumbai:2851561 # FB (district)
 )
 if [ ${#places[@]} -eq 0 ]; then
     echo "Must specify at least one location" 1>&2
@@ -30,7 +30,7 @@ pr_viz_days=$te_days
 #
 #
 #
-# python clean.py --results $RESULTS
+# python $ROOT/scripts/clean-results.py --results $RESULTS
 
 mkdir --parents $OUTPUT
 echo "[ `date` RESULTS ] $OUTPUT"
@@ -61,12 +61,12 @@ cat <<EOF >> $OUTPUT/README
 make-sird: ${args[@]}
 EOF
 
-python $DATA/state-wise-daily.py | \
-    python $DATA/clean.py | \
-    python make-sird.py ${args[@]} > $OUTPUT/raw.csv || exit
+python $DATA/covid19india/state-wise-daily.py | \
+    python $DATA/covid19india/clean.py | \
+    python $DATA/general/make-sird.py ${args[@]} > $OUTPUT/raw.csv || exit
 
 if [ $disaggregate ]; then
-    python disaggregate.py < $OUTPUT/raw.csv > $OUTPUT/cooked.csv
+    python $DATA/general/disaggregate.py < $OUTPUT/raw.csv > $OUTPUT/cooked.csv
 else
     ln --symbolic --relative $OUTPUT/raw.csv $OUTPUT/cooked.csv
 fi
@@ -76,8 +76,8 @@ fi
 #
 rm --recursive --force $HOME/.theano/compiledir*
 if [ $smooth ]; then
-    python $DATA/smooth.py --window $smooth | \
-	python make-sird.py ${args[@]}
+    python $DATA/covid19india/smooth.py --window $smooth | \
+	python $DATA/general/make-sird.py ${args[@]}
 else
     tee
 fi < $OUTPUT/cooked.csv | \
@@ -113,7 +113,7 @@ tmp=`mktemp`
 for i in $pr_days $pr_viz_days; do
     fname=`printf "fit-%03d.png" $i`
     cat <<EOF
-python visualize.py \
+python $ROOT/visualize/projection.py \
        --ground-truth $OUTPUT/cooked.csv \
        --testing-days $te_days \
        --project $i \
@@ -124,8 +124,8 @@ done > $tmp
 
 if [ $disaggregate ]; then
     cat <<EOF >> $tmp
-python accumulate.py < $OUTPUT/projection.csv | \
-    python visualize.py \
+python $DATA/general/accumulate.py < $OUTPUT/projection.csv | \
+    python $ROOT/visualize/projection.py \
 	   --ground-truth $OUTPUT/raw.csv \
 	   --testing-days $te_days \
 	   --project $pr_viz_days \
