@@ -1,12 +1,11 @@
 using
     CSV,
-    Plots,
+    # Optim,
+    Turing,
     DataFrames,
-    DiffEqBayes,
     Distributions,
     DifferentialEquations
 
-ENV["GKSwstype"] = "100"
 # disable_logging(Logging.Warn)
 
 function epimodel(N)
@@ -26,7 +25,7 @@ function epimodel(N)
     end
 end
 
-function getdata(fp)
+function load(fp)
     compartments = [
         :susceptible,
         :infected,
@@ -37,44 +36,55 @@ function getdata(fp)
     return select(sort(CSV.read(fp), [:date]), compartments, copycols=false)
 end
 
-function build(df)
-    (rows, _) = size(df)
+function solver(df)
+    steps = nrow(df)
 
-    ode = model(maximum(sum.(eachrow(df))))
-    u0 = convert(Matrix, first(df, 1))
-    tspan = (0.0, convert(Float64, rows))
+    ode = epimodel(maximum(sum.(eachrow(df))))
+    u0 = convert(Array{Float64}, first(df, 1))
+    tspan = (0.0, convert(Float64, steps))
+    prob = ODEProblem(ode, u0, tspan)
+    saveat = collect(range(1, stop=steps, length=steps))
 
-    return ODEProblem(ode, u0, tspan)
+    return function (p)
+        return solve(prob, Tsit5(); saveat=saveat, p=p)
+    end
 end
 
-function infer(df, prob)
-    (rows, _) = size(df)
+function infer(ode, data)
+    @model function f(x, ::Type{T} = Float64) where {T <: Real}
+        # priors
+        beta ~ Uniform(0.0, 1.0)
+        gamma ~ Uniform(0.0, 1.0)
+        mu ~ Uniform(0.0, 1.0)
 
-    rows -= 1
-    data = convert(Matrix, last(df, rows))
-    t = collect(range(1, stop=rows, length=rows))
-    priors = [
-        Uniform(0.0, 1.0), # beta
-        Uniform(0.0, 1.0), # gamma
-        Uniform(0.0, 1.0), # mu
-    ]
-    likelihood_dist_priors = [
-        InverseGamma(2, 3), # S
-        InverseGamma(2, 3), # I
-        InverseGamma(2, 3), # R
-        InverseGamma(2, 3), # D
-    ]
+        sol = ode((beta, gamma, mu))
+        if sol.retcode != :Success
+            ErrorException(sol.retcode)
+        end
 
-    return turing_inference(prob, Rodas4P(), t, data, priors;
-                            likelihood_dist_priors=likelihood_dist_priors,
-                            progress=true,
-                            num_samples=10)
+        # likelihood priors
+        sigma = Vector{Float64}(undef, ncols(Y))
+        for i in length(sigma)
+            sigma ~ InverseGamma(2, 3)
+        end
+
+        # likelihood
+        for i in eachindex(sol)
+            x[i,:] ~ MvNormal(sol[:,i], sqrt(sigma))
+        end
+    end
+    rng = f(data)
+
+    return sample(rng, NUTS())
 end
 
-df = getdata(stdin)
-posterior = infer(df, build(df))
+function main(fp)
+    df = load(fp)
+    ode = solver(df)
+    data = convert(Matrix, last(df, nrow(df) - 1))
+    posterior = infer(ode, data)
 
-plot(posterior)
-png("posterior.png")
+    CSV.write("posterior.csv", posterior)
+end
 
-CSV.write("posterior.csv", posterior)
+main(stdin)
