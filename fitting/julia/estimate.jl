@@ -9,17 +9,20 @@ using
 ENV["GKSwstype"] = "100"
 # disable_logging(Logging.Warn)
 
-function model(N)
-    return function sird!(du, u, p, t)
+function epimodel(N)
+    return function (u, p, t)
         (S, I, _, _) = u
         (beta, gamma, mu) = p
 
+        du = Array{Float64}(undef, size(u))
         dS = beta * I * S / N
 
         du[1] = -dS
         du[3] = gamma * I
         du[4] = mu * I
         du[2] = dS - du[3] - du[4]
+
+        return du
     end
 end
 
