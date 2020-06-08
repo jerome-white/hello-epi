@@ -47,21 +47,21 @@ function solver(df)
     saveat = collect(range(1, stop=steps, length=steps))
 
     return function (p)
-        return solve(prob, Tsit5(); saveat=saveat, p=p)
+        s = solve(prob, Tsit5(); saveat=saveat, p=p)
+        if s.retcode != :Success
+            ErrorException(s.retcode)
+        end
+
+        return s
     end
 end
 
-function infer(ode, data)
-    @model function f(x, ::Type{T} = Float64) where {T <: Real}
+function infer(data, observe)
+    @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
         beta ~ Uniform(0.0, 1.0)
         gamma ~ Uniform(0.0, 1.0)
         mu ~ Uniform(0.0, 1.0)
-
-        sol = ode((beta, gamma, mu))
-        if sol.retcode != :Success
-            ErrorException(sol.retcode)
-        end
 
         # likelihood priors
         sigma = Vector{Float64}(undef, ncols(x))
@@ -70,8 +70,9 @@ function infer(ode, data)
         end
 
         # likelihood
-        for i in eachindex(sol)
-            x[i,:] ~ MvNormal(sol[:,i], sqrt(sigma))
+        view = observe((beta, gamma, mu))
+        for i in eachindex(view)
+            x[i,:] ~ MvNormal(view[:,i], sqrt(sigma))
         end
     end
 
@@ -82,7 +83,7 @@ function main(fp)
     df = convert.(Float64, load(fp))
     ode = solver(df)
     data = last(df, nrow(df) - 1)
-    posterior = infer(ode, data)
+    posterior = infer(data, ode)
 
     CSV.write("posterior.csv", posterior)
 end
