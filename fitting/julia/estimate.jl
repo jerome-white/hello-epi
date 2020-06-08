@@ -64,7 +64,7 @@ function infer(ode, data)
         end
 
         # likelihood priors
-        sigma = Vector{Float64}(undef, ncols(Y))
+        sigma = Vector{Float64}(undef, ncols(x))
         for i in length(sigma)
             sigma ~ InverseGamma(2, 3)
         end
