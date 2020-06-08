@@ -56,7 +56,7 @@ function solver(df)
     end
 end
 
-function infer(data, observe)
+function learn(data, observe)
     @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
         beta ~ Uniform(0.0, 1.0)
@@ -83,7 +83,7 @@ function main(fp)
     df = convert.(Float64, load(fp))
     ode = solver(df)
     data = last(df, nrow(df) - 1)
-    posterior = infer(data, ode)
+    posterior = learn(data, ode)
 
     CSV.write("posterior.csv", posterior)
 end
