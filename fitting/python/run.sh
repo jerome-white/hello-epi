@@ -115,7 +115,7 @@ tmp=`mktemp`
 for i in $pr_days $pr_viz_days; do
     fname=`printf "fit-%03d.png" $i`
     cat <<EOF
-python $ROOT/visualize/projection.py \
+python $ROOT/visualization/projection.py \
        --ground-truth $OUTPUT/cooked.csv \
        --testing-days $te_days \
        --project $i \
@@ -127,7 +127,7 @@ done > $tmp
 if [ $disaggregate ]; then
     cat <<EOF >> $tmp
 python $DATA/general/accumulate.py < $OUTPUT/projection.csv | \
-    python $ROOT/visualize/projection.py \
+    python $ROOT/visualization/projection.py \
 	   --ground-truth $OUTPUT/raw.csv \
 	   --testing-days $te_days \
 	   --project $pr_viz_days \
