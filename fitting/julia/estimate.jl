@@ -8,7 +8,7 @@ using
 
 # disable_logging(Logging.Warn)
 
-function epimodel(N)
+function sird(N)
     return function (u, p, t)
         (S, I, _, _) = u
         (beta, gamma, mu) = p
@@ -39,10 +39,11 @@ end
 function solver(df)
     steps = nrow(df)
 
-    ode = epimodel(maximum(sum.(eachrow(df))))
-    u0 = convert(Array{Float64}, first(df, 1))
+    ode = sird(maximum(sum.(eachrow(df))))
+    u0 = convert(Array, first(df, 1))
     tspan = (0.0, convert(Float64, steps))
     prob = ODEProblem(ode, u0, tspan)
+
     saveat = collect(range(1, stop=steps, length=steps))
 
     return function (p)
@@ -73,15 +74,14 @@ function infer(ode, data)
             x[i,:] ~ MvNormal(sol[:,i], sqrt(sigma))
         end
     end
-    rng = f(data)
 
-    return sample(rng, NUTS())
+    return sample(f(data), NUTS())
 end
 
 function main(fp)
-    df = load(fp)
+    df = convert.(Float64, load(fp))
     ode = solver(df)
-    data = convert(Matrix, last(df, nrow(df) - 1))
+    data = last(df, nrow(df) - 1)
     posterior = infer(ode, data)
 
     CSV.write("posterior.csv", posterior)
