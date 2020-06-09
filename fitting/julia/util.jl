@@ -28,15 +28,17 @@ function load(fp)
     return select(sort(CSV.read(fp), [:date]), compartments, copycols=false)
 end
 
-function solver(df)
-    steps = nrow(df)
+function solver(df, duration=nothing)
+    if duration === nothing
+        duration = convert(Float64, nrow(df))
+    end
 
     ode = sird(maximum(sum.(eachrow(df))))
     u0 = convert(Array, first(df, 1))
-    tspan = (0.0, convert(Float64, steps))
+    tspan = (0.0, duration)
     prob = ODEProblem(ode, u0, tspan)
 
-    saveat = collect(range(1, stop=steps, length=steps))
+    saveat = collect(range(1, stop=duration))
 
     return function (p)
         s = solve(prob, Tsit5(); saveat=saveat, p=p)
