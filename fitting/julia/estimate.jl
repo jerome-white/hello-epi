@@ -1,6 +1,6 @@
 using
     CSV,
-    # Optim,
+    Optim,
     Turing,
     DataFrames,
     Distributions,
