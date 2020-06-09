@@ -49,7 +49,7 @@ function solver(df)
             ErrorException(s.retcode)
         end
 
-        return s
+        return Matrix(vcat(s.u...))
     end
 end
 
@@ -59,17 +59,17 @@ function learn(data, observe)
         beta ~ Uniform(0.0, 1.0)
         gamma ~ Uniform(0.0, 1.0)
         mu ~ Uniform(0.0, 1.0)
+        view = observe([beta, gamma, mu])
 
         # likelihood priors
-        sigma = Vector{Float64}(undef, ncols(x))
+        sigma = Vector{Float64}(undef, size(view, 2))
         for i in length(sigma)
             sigma ~ InverseGamma(2, 3)
         end
 
         # likelihood
-        view = observe((beta, gamma, mu))
-        for i in eachindex(view)
-            x[i,:] ~ MvNormal(view[:,i], sqrt(sigma))
+        for i in 1:size(view, 1)
+            x[i,:] ~ MvNormal(view[i,:], sqrt(sigma))
         end
     end
 
