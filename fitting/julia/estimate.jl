@@ -1,4 +1,5 @@
 using
+    CSV,
     Optim,
     Turing,
     # DataFrames,
@@ -36,8 +37,11 @@ function main(fp)
     ode = solver(df)
     # data = convert(Matrix, last(df, nrow(df) - 1))
     data = convert(Matrix, df)
-    estimates = learn(data, ode)
-    write("estimates.jls", estimates)
+
+    chains = learn(data, ode)
+
+    select(DataFrame(chains), [:beta, :gamma, :mu], copycols=false) |>
+        CSV.write(stdout)
 end
 
 main(stdin)
