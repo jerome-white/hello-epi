@@ -79,10 +79,10 @@ end
 function main(fp)
     df = convert.(Float64, load(fp))
     ode = solver(df)
-    data = last(df, nrow(df) - 1)
-    posterior = learn(data, ode)
-
-    CSV.write("posterior.csv", posterior)
+    # data = convert(Matrix, last(df, nrow(df) - 1))
+    data = convert(Matrix, df)
+    estimates = learn(data, ode)
+    write("estimates.jls", estimates)
 end
 
 main(stdin)
