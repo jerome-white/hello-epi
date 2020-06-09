@@ -9,19 +9,16 @@ using
 # disable_logging(Logging.Warn)
 
 function sird(N)
-    return function (u, p, t)
+    return function (du, u, p, t)
         (S, I, _, _) = u
         (beta, gamma, mu) = p
 
-        du = Array{Float64}(undef, size(u))
         dS = beta * I * S / N
 
         du[1] = -dS
         du[3] = gamma * I
         du[4] = mu * I
         du[2] = dS - du[3] - du[4]
-
-        return du
     end
 end
 
