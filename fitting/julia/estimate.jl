@@ -73,7 +73,7 @@ function learn(data, observe)
         end
     end
 
-    return sample(f(data), NUTS())
+    return sample(f(data), NUTS(0.65), 1000)
 end
 
 function main(fp)
