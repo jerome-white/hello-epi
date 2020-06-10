@@ -2,6 +2,7 @@ using
     CSV,
     Optim,
     Turing,
+    ArgParse,
     # DataFrames,
     Distributions
 
@@ -9,7 +10,29 @@ include("util.jl")
 
 # disable_logging(Logging.Warn)
 
-function learn(data, observe)
+function cliargs()
+    s = ArgParseSettings()
+
+    @add_arg_table! s begin
+        "--samples"
+        help = "Number of samples"
+        arg_type = Int
+        default = 1000
+
+        "--trace"
+        help = "File to dump Turing trace information"
+        default = nothing
+
+        "--workers"
+        help = "Number of parallel workers for sampling"
+        arg_type = Int
+        default = length(Sys.cpu_info())
+    end
+
+    return parse_args(s)
+end
+
+function learn(data, observe, n_samples, workers)
     @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
         beta ~ Uniform(0.0, 1.0)
