@@ -7,7 +7,9 @@ from multiprocessing import Pool, Queue
 
 import pandas as pd
 
-from util import EpiFitter, Logger, DataHandler
+from libepi import Logger
+
+from util import EpiFitter, DataHandler
 from util import SIRD as EpiModel
 # from util import IRD as EpiModel
 

@@ -10,7 +10,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import constants
 
-from util import EpiFitter, Logger, DataHandler
+from libepi import Logger
+
+from util import EpiFitter, DataHandler
 from util import SIRD as EpiModel
 # from util import IRD as EpiModel
 
