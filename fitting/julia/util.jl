@@ -30,15 +30,15 @@ end
 
 function solver(df, duration=nothing)
     if isnothing(duration)
-        duration = convert(Float64, nrow(df))
+        duration = nrow(df)
     end
 
     ode = sird(maximum(sum.(eachrow(df))))
     u0 = convert(Array, first(df, 1))
-    tspan = (0.0, duration)
+    tspan = (0.0, convert(Float64, duration))
     prob = ODEProblem(ode, u0, tspan)
 
-    saveat = collect(range(1, stop=duration))
+    saveat = collect(range(1, stop=duration, length=duration))
 
     return function (p)
         s = solve(prob, Tsit5(); saveat=saveat, p=p)
