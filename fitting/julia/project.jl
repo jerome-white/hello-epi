@@ -33,7 +33,7 @@ rename!(projections, [
     :day,
     :susceptible,
     :infected,
-    :deceased,
     :recovered,
+    :deceased,
 ])
 CSV.write(stdout, projections)

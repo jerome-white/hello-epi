@@ -21,8 +21,8 @@ function load(fp)
     compartments = [
         :susceptible,
         :infected,
-        :deceased,
         :recovered,
+        :deceased,
     ]
 
     return select(sort(CSV.read(fp), [:date]), compartments, copycols=false)
