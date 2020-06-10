@@ -2,7 +2,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool
 
-from util import Logger
+from libepi import Logger
 
 def func(args):
     contents = list(args.iterdir())

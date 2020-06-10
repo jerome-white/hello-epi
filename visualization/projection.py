@@ -12,7 +12,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import constants
 
-from util import Logger
+from libepi import Logger
 
 def labeller(x, testing):
     days = pd.Timedelta(testing, unit='D')

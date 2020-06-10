@@ -5,7 +5,7 @@ from multiprocessing import Pool
 
 import pandas as pd
 
-from util import Logger
+from libepi import Logger
 
 def func(args):
     (key, value, group) = args
