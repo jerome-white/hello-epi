@@ -52,7 +52,8 @@ function learn(data, observe, n_samples, workers)
         end
     end
 
-    return sample(f(data), NUTS(), 1000)
+    return sample(f(data), NUTS(), MCMCThreads(), n_samples, workers;
+                  drop_warmup=true)
 end
 
 function main(fp)
