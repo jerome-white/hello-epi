@@ -29,7 +29,7 @@ function load(fp)
 end
 
 function solver(df, duration=nothing)
-    if duration === nothing
+    if isnothing(duration)
         duration = convert(Float64, nrow(df))
     end
 
