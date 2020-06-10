@@ -56,16 +56,17 @@ function learn(data, observe, n_samples, workers)
                   drop_warmup=true)
 end
 
-function main(fp)
-    df = convert.(Float64, load(fp))
+function main(df, args)
     ode = solver(df)
     # data = convert(Matrix, last(df, nrow(df) - 1))
     data = convert(Matrix, df)
 
-    chains = learn(data, ode)
+    chains = learn(data, ode, args["samples"], args["workers"])
+    if !isnothing(args["trace"])
+        write(args["trace"], chains)
+    end
 
-    select(DataFrame(chains), [:beta, :gamma, :mu], copycols=false) |>
-        CSV.write(stdout)
+    return select(DataFrame(chains), [:beta, :gamma, :mu], copycols=false)
 end
 
-main(stdin)
+CSV.write(stdout, main(convert.(Float64, load(stdin)), cliargs()))
