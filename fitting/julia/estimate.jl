@@ -57,9 +57,9 @@ function learn(data, observe, n_samples, workers)
 end
 
 function main(df, args)
-    ode = solver(df)
-    # data = convert(Matrix, last(df, nrow(df) - 1))
-    data = convert(Matrix, df)
+    observed = nrow(df) - 1
+    ode = solver(df, observed)
+    data = convert(Matrix, last(df, observed))
 
     chains = learn(data, ode, args["samples"], args["workers"])
     if !isnothing(args["trace"])
