@@ -2,20 +2,22 @@ using
     CSV,
     DataFrames,
     SharedArrays
+#    Base.Threads
 
 include("util.jl")
 
 df = CSV.read(stdin)
-reference = load("raw.csv")
+reference = convert.(Float64, load("raw.csv"))
 
+duration = 180
 dimensions = (
-    nrow(df) * 180,
+    nrow(df) * duration,
     ncol(reference) + 2, # compartment names plus order and day
 )
 buffer = SharedArray{Float64}(dimensions)
 
-@threads for (i, p) in enumerate(eachrow(df))
-    ode = solver(reference)
+for (i, p) in enumerate(eachrow(df))
+    ode = solver(reference, duration)
     sol = ode(convert(Vector, p))
     tspan = size(sol, 1)
     estimates = hcat(repeat([i], tspan), range(0, stop=tspan-1), sol)
@@ -26,5 +28,12 @@ buffer = SharedArray{Float64}(dimensions)
 end
 
 projections = DataFrame(buffer)
-rename!(projections, [:susceptible, :infected, :deceased, :recovered])
+rename!(projections, [
+    :run,
+    :day,
+    :susceptible,
+    :infected,
+    :deceased,
+    :recovered,
+])
 CSV.write(stdout, projections)
