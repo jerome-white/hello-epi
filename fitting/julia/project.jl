@@ -1,39 +1,58 @@
 using
     CSV,
+    ArgParse,
     DataFrames,
     SharedArrays,
     Base.Threads
 
 include("util.jl")
 
-df = CSV.read(stdin)
-reference = convert.(Float64, load("raw.csv"))
+function cliargs()
+    s = ArgParseSettings()
 
-duration = 180
-dimensions = (
-    nrow(df) * duration,
-    ncol(reference) + 2, # compartment names plus order and day
-)
-buffer = SharedArray{Float64}(dimensions)
+    @add_arg_table! s begin
+        "--observations"
+        help = ""
 
-@threads for i in 1:nrow(df)
-    ode = solver(reference, duration)
-    sol = ode(convert(Vector, df[i,:]))
-    tspan = size(sol, 1)
-    estimates = hcat(repeat([i], tspan), range(0, stop=tspan-1), sol)
+        "--duration"
+        help = ""
+        arg_type = Int
+    end
 
-    y = i * tspan
-    x = y - tspan + 1
-    buffer[x:y,:] = estimates
+    return parse_args(s)
 end
 
-projections = DataFrame(buffer)
-rename!(projections, [
-    :run,
-    :day,
-    :susceptible,
-    :infected,
-    :recovered,
-    :deceased,
-])
-CSV.write(stdout, projections)
+function main(df, args)
+    reference = convert.(Float64, load(args["observations"]))
+
+    dimensions = (
+        nrow(df) * args["duration"],
+        ncol(reference) + 2, # compartment names plus "order" and "day"
+    )
+    buffer = SharedArray{Float64}(dimensions)
+
+    @threads for i in 1:nrow(df)
+        ode = solver(reference, args["duration"])
+        sol = ode(convert(Vector, df[i,:]))
+        tspan = size(sol, 1)
+        estimates = hcat(repeat([i], tspan), range(0, stop=tspan-1), sol)
+
+        y = i * tspan
+        x = y - tspan + 1
+        buffer[x:y,:] = estimates
+    end
+
+    projections = DataFrame(buffer)
+    rename!(projections, [
+        :run,
+        :day,
+        :susceptible,
+        :infected,
+        :recovered,
+        :deceased,
+    ])
+
+    return projections
+end
+
+CSV.write(stdout, main(CSV.read(stdin), cliargs()))
