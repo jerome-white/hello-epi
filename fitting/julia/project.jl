@@ -1,8 +1,8 @@
 using
     CSV,
     DataFrames,
-    SharedArrays
-#    Base.Threads
+    SharedArrays,
+    Base.Threads
 
 include("util.jl")
 
@@ -16,9 +16,9 @@ dimensions = (
 )
 buffer = SharedArray{Float64}(dimensions)
 
-for (i, p) in enumerate(eachrow(df))
+@threads for i in 1:nrow(df)
     ode = solver(reference, duration)
-    sol = ode(convert(Vector, p))
+    sol = ode(convert(Vector, df[i,:]))
     tspan = size(sol, 1)
     estimates = hcat(repeat([i], tspan), range(0, stop=tspan-1), sol)
 
