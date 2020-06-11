@@ -25,9 +25,10 @@ end
 function main(df, args)
     reference = convert.(Float64, load(args["observations"]))
 
+    acct = 2
     dimensions = (
         nrow(df) * args["duration"],
-        ncol(reference) + 2, # compartment names plus "order" and "day"
+        ncol(reference) + acct, # compartment names plus "order" and "day"
     )
     buffer = SharedArray{Float64}(dimensions)
 
