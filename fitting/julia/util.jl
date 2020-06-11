@@ -46,6 +46,6 @@ function solver(df, duration=nothing)
             ErrorException(s.retcode)
         end
 
-        return Matrix(vcat(s.u...))
+        return s
     end
 end
