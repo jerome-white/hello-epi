@@ -41,14 +41,14 @@ function learn(data, observe, n_samples, workers)
         view = observe([beta, gamma, mu])
 
         # likelihood priors
-        sigma = Vector{Float64}(undef, size(view, 2))
+        sigma = Vector{Float64}(undef, size(view, 1))
         for i in length(sigma)
             sigma ~ InverseGamma(2, 3)
         end
 
         # likelihood
-        for i in 1:size(view, 1)
-            x[i,:] ~ MvNormal(view[i,:], sqrt(sigma))
+        for i in 1:size(view, 2)
+            x[i,:] ~ MvNormal(vec(view[:,i]), sqrt(sigma))
         end
     end
 

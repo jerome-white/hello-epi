@@ -35,12 +35,16 @@ function main(df, args)
     @threads for i in 1:nrow(df)
         ode = solver(reference, args["duration"])
         sol = ode(convert(Vector, df[i,:]))
-        tspan = size(sol, 1)
-        estimates = hcat(repeat([i], tspan), range(0, stop=tspan-1), sol)
+        tspan = size(sol, 3)
 
         y = i * tspan
         x = y - tspan + 1
-        buffer[x:y,:] = estimates
+
+        buffer[x:y,1:acct] = hcat(repeat([i], tspan), range(0, stop=tspan-1))
+        for j in 1:size(sol, 2)
+            col = j + acct
+            buffer[x:y,col] = sol[j,:]
+        end
     end
 
     projections = DataFrame(buffer)
