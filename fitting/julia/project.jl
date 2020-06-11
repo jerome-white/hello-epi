@@ -12,10 +12,10 @@ function cliargs()
 
     @add_arg_table! s begin
         "--observations"
-        help = ""
+        help = "Data against which to project"
 
-        "--duration"
-        help = ""
+        "--forward"
+        help = "Number of days to project into the future"
         arg_type = Int
     end
 
@@ -25,24 +25,27 @@ end
 function main(df, args)
     reference = convert.(Float64, load(args["observations"]))
 
-    acct = 2
+    idxcols = 2
+    days = nrow(reference) + args["forward"]
     dimensions = (
-        nrow(df) * args["duration"],
-        ncol(reference) + acct, # compartment names plus "order" and "day"
+        nrow(df) * days,
+        ncol(reference) + idxcols, # compartment names plus "order" and "day"
     )
     buffer = SharedArray{Float64}(dimensions)
 
     @threads for i in 1:nrow(df)
-        ode = solver(reference, args["duration"])
+        ode = solver(reference, days)
         sol = ode(convert(Vector, df[i,:]))
-        tspan = size(sol, 3)
 
+        tspan = size(sol, 3)
+        order = repeat([i], tspan)
+        index = range(0, stop=tspan-1)
         y = i * tspan
         x = y - tspan + 1
 
-        buffer[x:y,1:acct] = hcat(repeat([i], tspan), range(0, stop=tspan-1))
+        buffer[x:y,1:idxcols] = hcat(order, index)
         for j in 1:size(sol, 2)
-            col = j + acct
+            col = j + idxcols
             buffer[x:y,col] = sol[j,:]
         end
     end
