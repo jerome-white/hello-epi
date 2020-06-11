@@ -16,11 +16,8 @@ function EpiModel()
         (I, _, _) = u
         (beta, gamma, mu, rho) = p
 
-        dS = beta * I * rho
-
-        du[1] = -dS
-        du[3] = gamma * I
-        du[4] = mu * I
-        du[2] = dS - du[3] - du[4]
+        du[2] = gamma * I
+        du[3] = mu * I
+        du[1] = beta * I * rho - du[2] - du[3]
     end
 end
