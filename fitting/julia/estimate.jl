@@ -7,6 +7,7 @@ using
     Distributions
 
 include("util.jl")
+include("sird.jl")
 
 # disable_logging(Logging.Warn)
 
@@ -14,10 +15,15 @@ function cliargs()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        "--samples"
-        help = "Number of samples"
+        "--draws"
+        help = "Number of draws"
         arg_type = Int
         default = 1000
+
+        "--posterior"
+        help = "Number of samples to take from the posterior"
+        arg_type = Float64
+        default = nothing
 
         "--trace"
         help = "File to dump Turing trace information"
@@ -57,16 +63,22 @@ function learn(data, observe, n_samples, workers)
 end
 
 function main(df, args)
+    epimodel = EpiModel(df)
     observed = nrow(df) - 1
-    ode = solver(df, observed)
+    ode = solver(df, epimodel, observed)
     data = convert(Matrix, last(df, observed))
 
-    chains = learn(data, ode, args["samples"], args["workers"])
+    chains = learn(data, ode, args["draws"], args["workers"])
     if !isnothing(args["trace"])
         write(args["trace"], chains)
     end
 
-    return select(DataFrame(chains), [:beta, :gamma, :mu], copycols=false)
+    frac = args["posterior"]
+    if !isnothing(frac) && 0 < frac < 1
+        chains = sample(chains, convert(Int, length(chains) * frac))
+    end
+
+    return select(DataFrame(chains), parameters, copycols=false)
 end
 
-CSV.write(stdout, main(convert.(Float64, load(stdin)), cliargs()))
+CSV.write(stdout, main(convert.(Float64,load(stdin, compartments)), cliargs()))
