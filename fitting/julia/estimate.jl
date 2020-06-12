@@ -22,7 +22,7 @@ function cliargs()
 
         "--posterior"
         help = "Number of samples to take from the posterior"
-        arg_type = Float64
+        arg_type = Int
         default = nothing
 
         "--trace"
@@ -74,9 +74,9 @@ function main(df, args)
         write(args["trace"], chains)
     end
 
-    frac = args["posterior"]
-    if !isnothing(frac) && 0 < frac < 1
-        chains = sample(chains, convert(Int, length(chains) * frac))
+    n = args["posterior"]
+    if !isnothing(n) && 0 < n <= length(chains)
+        chains = sample(chains, n)
     end
 
     return select(DataFrame(chains), parameters, copycols=false)
