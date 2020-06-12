@@ -41,10 +41,11 @@ end
 function learn(data, observe, n_samples, workers)
     @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
-        beta ~ Uniform(0.0, 1.0)
-        gamma ~ Uniform(0.0, 1.0)
-        mu ~ Uniform(0.0, 1.0)
-        view = observe([beta, gamma, mu])
+        theta = Vector{T}(undef, length(parameters))
+        for (i, (a, b)) in enumerate(priors())
+            theta[i] ~ NamedDist(b, a)
+        end
+        view = observe(theta)
 
         # likelihood priors
         sigma = Vector{T}(undef, length(compartments))

@@ -1,5 +1,6 @@
 using
-    DataFrames
+    DataFrames,
+    Distributions
 
 compartments = [
     :susceptible,
@@ -30,4 +31,18 @@ end
 
 function EpiModel(df::DataFrame)
     return EpiModel(maximum(sum.(eachrow(df))))
+end
+
+function priors()
+    dists = (
+        Uniform(0.0, 10.0),
+        Uniform(0.0, 2.0),
+        Uniform(0.0, 1.0),
+    )
+
+    Channel() do channel
+        for i in zip(parameters, dists)
+            put!(channel, i)
+        end
+    end
 end
