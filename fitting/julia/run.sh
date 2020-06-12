@@ -96,9 +96,9 @@ fi
 julia estimate.jl $trace_opt --draws $draws --posterior $samples < \
       $OUTPUT/training.csv > \
       $OUTPUT/params.csv || exit
-julia project.jl --observations $OUTPUT/raw.csv --forward $pr_days > \
-      $OUTPUT/projection.csv < \
-      $OUTPUT/params.csv
+julia project.jl --observations $OUTPUT/raw.csv --forward $pr_days < \
+      $OUTPUT/params.csv > \
+      $OUTPUT/projection.csv
 
 if [ "$trace_opt" ] && [ -e $trace ]; then
     julia model-explorer.jl $trace_opt --output $OUTPUT/trace.png
