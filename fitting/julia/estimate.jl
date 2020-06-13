@@ -71,8 +71,8 @@ function main(df, args)
     epimodel = EpiModel(df)
     observed = nrow(df) - 1
     ode = solver(df, epimodel, observed)
-    data = convert(Matrix, last(df, observed))
 
+    data = convert.(Float64, Matrix(last(df, observed)))
     chains = learn(data, ode, args["draws"], args["workers"])
     if !isnothing(args["trace"])
         write(args["trace"], chains)
@@ -86,4 +86,4 @@ function main(df, args)
     return select(DataFrame(chains), parameters, copycols=false)
 end
 
-CSV.write(stdout, main(convert.(Float64,load(stdin, compartments)), cliargs()))
+CSV.write(stdout, main(load(stdin, compartments), cliargs()))

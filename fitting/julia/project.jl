@@ -24,7 +24,7 @@ function cliargs()
 end
 
 function main(df, args)
-    reference = convert.(Float64, load(args["observations"], compartments))
+    reference = load(args["observations"], compartments)
 
     idxcols = [
         :run,
