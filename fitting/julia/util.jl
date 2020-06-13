@@ -7,12 +7,7 @@ function load(fp, compartments)
     return select(sort(CSV.read(fp), [:date]), compartments, copycols=false)
 end
 
-function solver(df, epimodel, duration=nothing)
-    if isnothing(duration)
-        duration = nrow(df)
-    end
-
-    u0 = convert(Array, first(df, 1))
+function solver(u0::Vector{Float64}, duration::Number, epimodel)
     tspan = (0.0, convert(Float64, duration))
     prob = ODEProblem(epimodel, u0, tspan)
 
@@ -26,4 +21,12 @@ function solver(df, epimodel, duration=nothing)
 
         return s
     end
+end
+
+function solver(df::DataFrame, epimodel, duration::Number)
+    return solver(Vector{Float64}(first(df)), duration, epimodel)
+end
+
+function solver(df::DataFrame, epimodel)
+    return solver(df, epimodel, nrow(df))
 end
