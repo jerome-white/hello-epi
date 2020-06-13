@@ -60,9 +60,11 @@ function learn(data, observe, n_samples, workers)
     end
 
     model = f(data)
-    sampler = NUTS(convert(Int, n_samples * 0.25))
+    sampler = NUTS(convert(Int, n_samples * 0.25), 0.95)
+    parallel_type = MCMCThreads()
 
-    return sample(model, sampler, MCMCThreads(), n_samples, workers)
+    return sample(model, sampler, parallel_type, n_samples, workers;
+                  drop_warmup=true)
 end
 
 function main(df, args)
