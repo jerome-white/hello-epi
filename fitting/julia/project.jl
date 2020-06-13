@@ -35,7 +35,7 @@ function main(df, args)
     days = nrow(reference) + args["forward"]
     dimensions = (
         nrow(df) * days,
-        ncol(reference) + n,
+        n + length(compartments),
     )
     buffer = SharedArray{Float64}(dimensions)
 
@@ -44,16 +44,19 @@ function main(df, args)
         ode = solver(reference, epimodel, days)
         sol = ode(convert(Vector, df[i,:]))
 
-        tspan = size(sol, 3)
+        tspan = length(sol)
+        bottom = i * tspan
+        top = bottom - tspan + 1
+
         order = repeat([i], tspan)
         index = range(0, stop=tspan-1)
-        y = i * tspan
-        x = y - tspan + 1
+        buffer[top:bottom,1:n] = hcat(order, index)
 
-        buffer[x:y,1:n] = hcat(order, index)
-        for j in 1:size(sol, 2)
-            col = j + n
-            buffer[x:y,col] = sol[j,:]
+        left = n + 1
+        right = left + length(compartments) - 1
+        for j in 1:tspan
+            buffer[top,left:right] = sol(j - 1)
+            top += 1
         end
     end
 

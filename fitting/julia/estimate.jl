@@ -54,13 +54,13 @@ function learn(data, observe, n_samples, workers)
         end
 
         # likelihood
-        for i in 1:size(view, 2)
-            x[i,:] ~ MvNormal(vec(view[:,i]), sqrt.(sigma))
+        for i in 1:length(view)
+            x[i,:] ~ MvNormal(view(i - 1), sqrt.(sigma))
         end
     end
 
     model = f(data)
-    sampler = NUTS(convert(Int, n_samples * 0.25), 0.8)
+    sampler = NUTS(convert(Int, n_samples * 0.25))
 
     return sample(model, sampler, MCMCThreads(), n_samples, workers)
 end
