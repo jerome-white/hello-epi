@@ -8,8 +8,8 @@ from scipy import constants
 
 def get(args):
     keys = (
-        'source',
         'target',
+        'source',
     )
 
     for i in keys:
