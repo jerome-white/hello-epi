@@ -53,17 +53,15 @@ function main(df, args)
         ode = solver(reference, epimodel, days)
         sol = ode(convert(Vector, df[i,:]))
 
-        tspan = length(sol)
-        bottom = i * tspan
-        top = bottom - tspan + 1
+        bottom = i * days
+        top = bottom - days + 1
 
-        order = repeat([i], tspan)
-        index = range(0, stop=tspan-1)
+        order = repeat([i], days)
         buffer[top:bottom,1:n] = hcat(order, index)
 
         left = n + 1
         right = left + length(compartments) - 1
-        for j in 1:tspan
+        for j in 1:days
             buffer[top,left:right] = sol(j - 1)
             top += 1
         end
