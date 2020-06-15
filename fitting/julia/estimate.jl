@@ -7,7 +7,8 @@ using
     Distributions
 
 include("util.jl")
-include("sird.jl")
+# include("sird.jl")
+include("ird.jl")
 
 # disable_logging(Logging.Warn)
 
@@ -62,7 +63,7 @@ function learn(data, observe, n_samples, workers)
     end
 
     model = f(data)
-    sampler = NUTS(convert(Int, n_samples * 0.25), 0.95)
+    sampler = NUTS(round(Int, n_samples * 0.25), 0.65)
     parallel_type = MCMCThreads()
 
     return sample(model, sampler, parallel_type, n_samples, workers;
@@ -70,11 +71,10 @@ function learn(data, observe, n_samples, workers)
 end
 
 function main(df, args)
-    epimodel = EpiModel(df)
-    observed = nrow(df) - 1
-    ode = solver(df, epimodel, observed)
+    epimodel = EpiModel()
+    ode = solver(df, epimodel)
 
-    data = convert.(Float64, Matrix(last(df, observed)))
+    data = Matrix(convert.(Float64, last(df, nrow(df) - 1)))
     chains = learn(data, ode, args["draws"], args["workers"])
     if !isnothing(args["trace"])
         write(args["trace"], chains)
