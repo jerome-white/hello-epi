@@ -3,6 +3,8 @@ using
     StatsPlots,
     MCMCChains
 
+ENV["GKSwstype"] = "100"
+
 function cliargs()
     s = ArgParseSettings()
 
