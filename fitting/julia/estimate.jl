@@ -46,6 +46,7 @@ function learn(data, observe, n_samples, workers)
         for (i, (a, b)) in enumerate(priors())
             theta[i] ~ NamedDist(b, a)
         end
+        view = observe(theta)
 
         # likelihood priors
         sigma = Vector{T}(undef, length(compartments))
@@ -54,7 +55,6 @@ function learn(data, observe, n_samples, workers)
         end
 
         # likelihood
-        view = observe(theta)
         for i in 1:length(view)
             x[i,:] ~ MvNormal(view(i), sqrt.(sigma))
         end
