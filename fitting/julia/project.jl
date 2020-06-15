@@ -16,6 +16,11 @@ function cliargs()
         "--observations"
         help = "Data against which to project"
 
+        "--offset"
+        help = ""
+        arg_type = Int
+        default = 0
+
         "--forward"
         help = "Number of days to project into the future"
         arg_type = Int
@@ -39,6 +44,9 @@ function main(df, args)
         n + length(compartments),
     )
     buffer = SharedArray{Float64}(dimensions)
+
+    stop = args["offset"] + days - 1
+    index = range(args["offset"], stop=stop)
 
     @threads for i in 1:nrow(df)
         epimodel = EpiModel()
