@@ -93,16 +93,28 @@ if [ $trace ]; then
     trace_opt="--trace $trace"
 fi
 
-julia estimate.jl $trace_opt --draws $draws --posterior $samples < \
-      $OUTPUT/training.csv > \
-      $OUTPUT/params.csv || exit
-julia project.jl --observations $OUTPUT/raw.csv --forward $pr_days < \
-      $OUTPUT/params.csv > \
-      $OUTPUT/projection.csv
-
+echo "[ `date` RESULTS ] Estimate"
+julia estimate.jl $trace_opt \
+      --draws $draws \
+      --posterior $samples \
+      < $OUTPUT/training.csv \
+      > $OUTPUT/params.csv \
+    || exit
 if [ "$trace_opt" ] && [ -e $trace ]; then
+    echo "[ `date` RESULTS ] Explore"
     julia model-explorer.jl $trace_opt --output $OUTPUT/trace.png
 fi
+
+offset=`python $DATA/general/days-between.py \
+      --source $OUTPUT/raw.csv \
+      --target $OUTPUT/training.csv`
+echo "[ `date` RESULTS ] Project"
+julia project.jl \
+      --offset $offset \
+      --forward $pr_days \
+      --observations $OUTPUT/training.csv \
+      < $OUTPUT/params.csv \
+      > $OUTPUT/projection.csv
 
 #
 #
