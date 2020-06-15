@@ -45,17 +45,19 @@ function learn(data, observe, n_samples, workers)
         for (i, (a, b)) in enumerate(priors())
             theta[i] ~ NamedDist(b, a)
         end
+        view = observe(theta)
 
         # likelihood priors
-        sigma = Vector{T}(undef, length(compartments))
-        for i in 1:length(sigma)
-            sigma[i] ~ InverseGamma(2, 1)
-        end
+        # sigma = Vector{T}(undef, length(compartments))
+        # for i in 1:length(sigma)
+        #     sigma[i] ~ InverseGamma(2, 1)
+        # end
 
         # likelihood
-        view = observe(theta)
         for i in 1:length(view)
-            x[i,:] ~ MvNormal(view(i), sqrt.(sigma))
+            for (j, y) enumerate(view(i - 1))
+                x[i,j] ~ Poisson(y)
+            end
         end
     end
 
