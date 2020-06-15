@@ -6,7 +6,8 @@ using
     Base.Threads
 
 include("util.jl")
-include("sird.jl")
+# include("sird.jl")
+include("ird.jl")
 
 function cliargs()
     s = ArgParseSettings()
@@ -40,7 +41,7 @@ function main(df, args)
     buffer = SharedArray{Float64}(dimensions)
 
     @threads for i in 1:nrow(df)
-        epimodel = EpiModel(reference)
+        epimodel = EpiModel()
         ode = solver(reference, epimodel, days)
         sol = ode(convert(Vector, df[i,:]))
 
