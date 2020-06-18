@@ -22,7 +22,7 @@ if [ ${#places[@]} -eq 0 ]; then
     exit 1
 fi
 
-disaggregate=1
+disaggregate=
 smooth=7
 te_days=5
 pr_days=30
@@ -95,6 +95,7 @@ fi
 
 echo "[ `date` RESULTS ] Estimate"
 julia estimate.jl $trace_opt \
+      --population $population \
       --draws $draws \
       --posterior $samples \
       < $OUTPUT/training.csv \
@@ -110,6 +111,7 @@ offset=`python $DATA/general/days-between.py \
       --target $OUTPUT/training.csv`
 echo "[ `date` RESULTS ] Project"
 julia project.jl \
+      --population $population \
       --offset $offset \
       --forward $pr_days \
       --observations $OUTPUT/training.csv \

@@ -6,8 +6,8 @@ using
     Base.Threads
 
 include("util.jl")
-# include("sird.jl")
-include("ird.jl")
+include("sird.jl")
+# include("ird.jl")
 
 function cliargs()
     s = ArgParseSettings()
@@ -23,6 +23,10 @@ function cliargs()
 
         "--forward"
         help = "Number of days to project into the future"
+        arg_type = Int
+
+        "--population"
+        help = "Population"
         arg_type = Int
     end
 
@@ -49,7 +53,7 @@ function main(df, args)
     index = range(args["offset"], stop=stop)
 
     @threads for i in 1:nrow(df)
-        epimodel = EpiModel()
+        epimodel = EpiModel(args["population"])
         ode = solver(reference, epimodel, days)
         sol = ode(convert(Vector, df[i,:]))
 

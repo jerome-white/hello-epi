@@ -7,8 +7,8 @@ using
     Distributions
 
 include("util.jl")
-# include("sird.jl")
-include("ird.jl")
+include("sird.jl")
+# include("ird.jl")
 
 # disable_logging(Logging.Warn)
 
@@ -20,6 +20,10 @@ function cliargs()
         help = "Number of draws"
         arg_type = Int
         default = 1000
+
+        "--population"
+        help = "Population"
+        arg_type = Int
 
         "--posterior"
         help = "Number of samples to take from the posterior"
@@ -69,7 +73,7 @@ function learn(data, observe, n_samples, workers)
 end
 
 function main(df, args)
-    epimodel = EpiModel()
+    epimodel = EpiModel(args["population"])
     ode = solver(df, epimodel)
 
     data = Matrix{Float64}(df)
