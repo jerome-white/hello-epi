@@ -55,8 +55,8 @@ function learn(data, observe, n_samples, workers)
         end
 
         # likelihood
-        for i in 1:length(view)
-            x[i,:] ~ MvNormal(view(i), sqrt.(sigma))
+        for i in 1:length(compartments)
+            x[:,i] ~ MvNormal(view[i,:], sqrt(sigma[i]))
         end
     end
 
