@@ -72,7 +72,7 @@ function main(df, args)
     epimodel = EpiModel()
     ode = solver(df, epimodel)
 
-    data = Matrix(convert.(Float64, last(df, nrow(df) - 1)))
+    data = Matrix{Float64}(df)
     chains = learn(data, ode, args["draws"], args["workers"])
     if !isnothing(args["trace"])
         write(args["trace"], chains)
