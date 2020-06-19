@@ -7,8 +7,8 @@ using
     Distributions
 
 include("util.jl")
-include("sird.jl")
-# include("ird.jl")
+# include("sird.jl")
+include("ird.jl")
 
 # disable_logging(Logging.Warn)
 
@@ -43,11 +43,11 @@ function cliargs()
     return parse_args(s)
 end
 
-function learn(data, observe, n_samples, workers)
+function learn(data, observe, prior, n_samples, workers)
     @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
         theta = Vector{T}(undef, length(parameters))
-        for (i, (a, b)) in enumerate(priors())
+        for (i, (a, b)) in enumerate(prior())
             theta[i] ~ NamedDist(b, a)
         end
         view = observe(theta)
@@ -77,7 +77,8 @@ function main(df, args)
     ode = solver(df, epimodel)
 
     data = Matrix{Float64}(df)
-    chains = learn(data, ode, args["draws"], args["workers"])
+    prior = priors(df, args["population"])
+    chains = learn(data, ode, prior, args["draws"], args["workers"])
     if !isnothing(args["trace"])
         write(args["trace"], chains)
     end

@@ -6,8 +6,8 @@ using
     Base.Threads
 
 include("util.jl")
-include("sird.jl")
-# include("ird.jl")
+# include("sird.jl")
+include("ird.jl")
 
 function cliargs()
     s = ArgParseSettings()
