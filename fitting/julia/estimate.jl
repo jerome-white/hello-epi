@@ -3,7 +3,7 @@ using
     Optim,
     Turing,
     ArgParse,
-    # DataFrames,
+    # MCMCChains,
     Distributions
 
 include("util.jl")
@@ -82,12 +82,15 @@ function main(df, args)
         write(args["trace"], chains)
     end
 
+    results =  select(DataFrame(chains), parameters, copycols=false)
+
     n = args["posterior"]
-    if !isnothing(n) && 0 < n <= length(chains)
-        chains = sample(chains, n)
+    if !isnothing(n) && 0 < n <= nrow(results)
+        rows = sample(1:nrow(results), n; replace=false)
+        results = results[rows,:]
     end
 
-    return select(DataFrame(chains), parameters, copycols=false)
+    return results
 end
 
 CSV.write(stdout, main(load(stdin, compartments), cliargs()))
