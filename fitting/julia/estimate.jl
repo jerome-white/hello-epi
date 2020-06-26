@@ -1,9 +1,7 @@
 using
-    CSV,
     Optim,
     Turing,
     ArgParse,
-    # MCMCChains,
     Distributions
 
 include("util.jl")
@@ -24,11 +22,6 @@ function cliargs()
         "--population"
         help = "Population"
         arg_type = Int
-
-        "--posterior"
-        help = "Number of samples to take from the posterior"
-        arg_type = Int
-        default = nothing
 
         "--trace"
         help = "File to dump Turing trace information"
@@ -77,21 +70,8 @@ function main(df, args)
     ode = solver(df, epimodel)
 
     data = Matrix{Float64}(df)
-    prior = priors(df, args["population"])
-    chains = learn(data, ode, prior, args["draws"], args["workers"])
-    if !isnothing(args["trace"])
-        write(args["trace"], chains)
-    end
-
-    results =  select(DataFrame(chains), parameters, copycols=false)
-
-    n = args["posterior"]
-    if !isnothing(n) && 0 < n <= nrow(results)
-        rows = sample(1:nrow(results), n; replace=false)
-        results = results[rows,:]
-    end
-
-    return results
+    chains = learn(data, ode, args["draws"], args["workers"])
+    write(args["trace"], chains)
 end
 
-CSV.write(stdout, main(load(stdin, compartments), cliargs()))
+main(load(stdin, compartments), cliargs())
