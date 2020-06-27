@@ -55,6 +55,9 @@ function learn(data, observe, n_samples, workers)
         for i in 1:length(compartments)
             x[:,i] ~ MvNormal(view[i,:], sqrt(sigma[i]))
         end
+        # for i in 1:length(view)
+        #     x[i,:] ~ MvNormal(view[:,i], sqrt.(sigma))
+        # end
     end
 
     model = f(data)
