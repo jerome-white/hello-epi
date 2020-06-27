@@ -64,10 +64,9 @@ function main(df, args)
         buffer[top:bottom,1:n] = hcat(order, index)
 
         left = n + 1
-        right = left + length(compartments) - 1
-        for j in 1:days
-            buffer[top,left:right] = sol(j - 1)
-            top += 1
+        for j in 1:length(compartments)
+            buffer[top:bottom,left] = sol[j,:]
+            left += 1
         end
     end
 
