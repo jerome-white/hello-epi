@@ -54,7 +54,7 @@ function main(df, args)
 
     @threads for i in 1:nrow(df)
         epimodel = EpiModel(args["population"])
-        ode = solver(reference, epimodel, days)
+        ode = solver(reference, days, epimodel)
         sol = ode(convert(Vector, df[i,:]))
 
         bottom = i * days
