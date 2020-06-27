@@ -24,13 +24,15 @@ fi
 
 disaggregate=
 smooth=7
-te_days=5
-pr_days=30
-pr_viz_days=$te_days
+te_days=2
+pr_days=21
+pr_viz_days=(
+    7
+    $pr_days
+)
 
-trace=$OUTPUT/chains.jls
-draws=10000
-samples=$(printf "%.0f" `bc -l <<< "$draws * 0.1"`)
+draws=4000
+samples=`bc -l <<< "2000 / $draws"`
 
 #
 #
@@ -89,27 +91,25 @@ else
 fi < $OUTPUT/cooked.csv | \
     head --lines=-$te_days > $OUTPUT/training.csv
 
-if [ $trace ]; then
-    trace_opt="--trace $trace"
-fi
+trace_opt="--trace $OUTPUT/chains.jls"
 
 echo "[ `date` RESULTS ] Estimate"
 julia estimate.jl $trace_opt \
       --population $population \
       --draws $draws \
-      --posterior $samples \
       < $OUTPUT/training.csv \
-      > $OUTPUT/params.csv \
     || exit
-if [ "$trace_opt" ] && [ -e $trace ]; then
-    echo "[ `date` RESULTS ] Explore"
-    julia model-explorer.jl $trace_opt --output $OUTPUT/trace.png
-fi
 
+echo "[ `date` RESULTS ] Evaluate"
+cat <<EOF | parallel --will-cite --line-buffer
+julia model-explorer.jl $trace_opt --output $OUTPUT/trace.png
+julia sample-post.jl $trace_opt --samples $samples > $OUTPUT/params.csv
+EOF
+
+echo "[ `date` RESULTS ] Project"
 offset=`python $DATA/general/days-between.py \
       --source $OUTPUT/raw.csv \
       --target $OUTPUT/training.csv`
-echo "[ `date` RESULTS ] Project"
 julia project.jl \
       --population $population \
       --offset $offset \
@@ -122,7 +122,7 @@ julia project.jl \
 #
 #
 tmp=`mktemp`
-for i in $pr_days $pr_viz_days; do
+for i in ${pr_viz_days[@]}; do
     fname=`printf "fit-%03d.png" $i`
     cat <<EOF
 python $ROOT/visualization/projection.py \
@@ -140,7 +140,7 @@ python $DATA/general/accumulate.py < $OUTPUT/projection.csv | \
     python $ROOT/visualization/projection.py \
 	   --ground-truth $OUTPUT/raw.csv \
 	   --testing-days $te_days \
-	   --project $pr_viz_days \
+	   --project $pr_days \
 	   --output $OUTPUT/cummulative.png
 EOF
 fi
