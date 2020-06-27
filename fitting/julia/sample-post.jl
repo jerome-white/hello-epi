@@ -3,6 +3,7 @@ using
     ArgParse,
     MCMCChains
 
+# include("sird.jl")
 include("ird.jl")
 
 function cliargs()
