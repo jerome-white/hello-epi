@@ -14,7 +14,7 @@ function solver(u0::Vector{Float64}, duration::Number, epimodel)
     return function (p)
         prob = ODEProblem(epimodel, u0, tspan)
 
-        s = solve(prob, Rosenbrock23(); saveat=1, p=p)
+        s = solve(prob, Rodas4P(); saveat=1, p=p)
         if s.retcode != :Success
             ErrorException(String(s.retcode))
         end
