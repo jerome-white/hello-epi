@@ -49,17 +49,22 @@ function learn(data, observe, n_samples, workers)
         view = observe(theta)
 
         # likelihood priors
-        # sigma = Vector{T}(undef, length(compartments))
-        # for i in 1:length(sigma)
-        #     sigma[i] ~ InverseGamma(2, 1)
-        # end
+        phi = Vector{T}(undef, length(compartments))
+        for i in 1:length(phi)
+            phi[i] ~ truncated(Beta(2, 5), 1e-6, Inf)
+        end
 
         # likelihood
-        for i in 1:length(view)
-            for (j, y) enumerate(view(i - 1))
-                x[i,j] ~ Poisson(y)
-            end
+        for i in 1:length(compartments)
+            mu = clamp.(view[i,:], 0, Inf)
+            x[:,i] ~ arraydist(NegativeBinomial2.(mu, 5)) # phi[i]))
         end
+
+        # for i in 1:length(view)
+        #     for (j, y) in enumerate(view[i])
+        #         x[i,j] ~ NegativeBinomial2(clamp(y, 0, Inf), phi)
+        #     end
+        # end
     end
 
     model = f(data)
