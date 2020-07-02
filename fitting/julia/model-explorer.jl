@@ -10,7 +10,7 @@ function cliargs()
 
     @add_arg_table! s begin
         "--trace"
-        help = "File to dump Turing trace information"
+        help = "Trace file"
 
         "--output"
         help = "Figure to generate"

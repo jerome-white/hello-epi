@@ -11,7 +11,7 @@ function cliargs()
 
     @add_arg_table! s begin
         "--trace"
-        help = "File to dump Turing trace information"
+        help = "Trace file"
 
         "--samples"
         help = "Number of samples to take from the posterior"
@@ -23,8 +23,8 @@ function cliargs()
 end
 
 function main(args)
-    chains = read(args["trace"], Chains)
-    results = select(DataFrame(chains), parameters, copycols=false)
+    chn = read(args["trace"], Chains)
+    results = select(DataFrame(chn), parameters, copycols=false)
 
     if 0 < args["samples"] < 1
         samples = nrow(results)
