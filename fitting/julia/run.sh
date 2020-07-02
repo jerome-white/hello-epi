@@ -23,12 +23,12 @@ if [ ${#places[@]} -eq 0 ]; then
 fi
 
 disaggregate=
-smooth=7
-te_days=2
-pr_days=21
-pr_viz_days=(
+smooth=
+training_days=5
+testing_days=21
+viz_days=(
     7
-    $pr_days
+    $testing_days
 )
 
 draws=4000
@@ -45,7 +45,7 @@ mkdir --parents $OUTPUT
 echo "[ `date` RESULTS ] $OUTPUT"
 
 cat <<EOF > $OUTPUT/README
-training days: $te_days
+training days: $training_days
 smoothing: $smooth
 disaggregate: $disaggregate
 EOF
@@ -70,12 +70,16 @@ cat <<EOF >> $OUTPUT/README
 make-sird: ${args[@]}
 EOF
 
-python $DATA/covid19india/state-wise-daily.py | \
-    python $DATA/covid19india/clean.py | \
-    python $DATA/general/make-sird.py ${args[@]} > $OUTPUT/raw.csv || exit
+python $DATA/covid19india/state-wise-daily.py \
+    | python $DATA/covid19india/clean.py \
+    | python $DATA/general/make-sird.py ${args[@]} \
+	     > $OUTPUT/raw.csv \
+    || exit
 
 if [ $disaggregate ]; then
-    python $DATA/general/disaggregate.py < $OUTPUT/raw.csv > $OUTPUT/cooked.csv
+    python $DATA/general/disaggregate.py \
+	   < $OUTPUT/raw.csv \
+	   > $OUTPUT/cooked.csv
 else
     ln --symbolic --relative $OUTPUT/raw.csv $OUTPUT/cooked.csv
 fi
@@ -84,28 +88,38 @@ fi
 #
 #
 if [ $smooth ]; then
-    python $DATA/covid19india/smooth.py --window $smooth | \
-	python $DATA/general/make-sird.py ${args[@]}
+    python $DATA/covid19india/smooth.py --window $smooth \
+	| python $DATA/general/make-sird.py ${args[@]}
 else
     tee
-fi < $OUTPUT/cooked.csv | \
-    head --lines=-$te_days > $OUTPUT/training.csv
+fi < $OUTPUT/cooked.csv \
+    | head --lines=-$training_days \
+	   > $OUTPUT/training.csv
 
+#
+#
+#
 trace_opt="--trace $OUTPUT/chains.jls"
 
 echo "[ `date` RESULTS ] Estimate"
 julia estimate.jl $trace_opt \
-      --population $population \
       --draws $draws \
+      --population $population \
       < $OUTPUT/training.csv \
     || exit
 
+#
+#
+#
 echo "[ `date` RESULTS ] Evaluate"
 cat <<EOF | parallel --will-cite --line-buffer
 julia model-explorer.jl $trace_opt --output $OUTPUT/trace.png
 julia sample-post.jl $trace_opt --samples $samples > $OUTPUT/params.csv
 EOF
 
+#
+#
+#
 echo "[ `date` RESULTS ] Project"
 offset=`python $DATA/general/days-between.py \
       --source $OUTPUT/raw.csv \
@@ -113,7 +127,7 @@ offset=`python $DATA/general/days-between.py \
 julia project.jl \
       --population $population \
       --offset $offset \
-      --forward $pr_days \
+      --forward $testing_days \
       --observations $OUTPUT/training.csv \
       < $OUTPUT/params.csv \
       > $OUTPUT/projection.csv
@@ -122,12 +136,12 @@ julia project.jl \
 #
 #
 tmp=`mktemp`
-for i in ${pr_viz_days[@]}; do
+for i in ${viz_days[@]}; do
     fname=`printf "fit-%03d.png" $i`
     cat <<EOF
 python $ROOT/visualization/projection.py \
        --ground-truth $OUTPUT/cooked.csv \
-       --testing-days $te_days \
+       --testing-days $training_days \
        --project $i \
        --output $OUTPUT/$fname < \
        $OUTPUT/projection.csv
@@ -139,8 +153,8 @@ if [ $disaggregate ]; then
 python $DATA/general/accumulate.py < $OUTPUT/projection.csv | \
     python $ROOT/visualization/projection.py \
 	   --ground-truth $OUTPUT/raw.csv \
-	   --testing-days $te_days \
-	   --project $pr_days \
+	   --testing-days $training_days \
+	   --project $testing_days \
 	   --output $OUTPUT/cummulative.png
 EOF
 fi
