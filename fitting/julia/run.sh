@@ -1,11 +1,12 @@
 #!/bin/bash
 
-export PYTHONLOGLEVEL=debug
-
 ROOT=`git rev-parse --show-toplevel`
 DATA=$ROOT/data
 RESULTS=$ROOT/results
 OUTPUT=$RESULTS/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
+
+export PYTHONLOGLEVEL=debug
+export PYTHONPATH=$ROOT
 
 #
 #
