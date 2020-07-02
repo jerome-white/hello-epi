@@ -76,4 +76,4 @@ function main(df, args)
     return projections
 end
 
-CSV.write(stdout, main(CSV.read(stdin), cliargs()))
+CSV.write(stdout, main(DataFrame!(CSV.File(read(stdin))), cliargs()))

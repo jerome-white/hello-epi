@@ -4,7 +4,8 @@ using
     DifferentialEquations
 
 function load(fp, compartments)
-    return select(sort(CSV.read(fp), [:date]), compartments, copycols=false)
+    df = DataFrame!(CSV.File(fp))
+    return select(sort(df, [:date]), compartments, copycols=false)
 end
 
 function solver(u0::Vector{Float64}, duration::Number, epimodel)

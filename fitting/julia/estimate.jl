@@ -77,4 +77,4 @@ function main(df, args)
     write(args["trace"], chains)
 end
 
-main(load(stdin, compartments), cliargs())
+main(load(read(stdin), compartments), cliargs())
