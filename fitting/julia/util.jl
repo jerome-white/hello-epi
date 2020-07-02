@@ -1,6 +1,7 @@
 using
     CSV,
     DataFrames,
+    Distributions,
     DifferentialEquations
 
 function load(fp, compartments)
@@ -29,4 +30,12 @@ end
 
 function solver(df::DataFrame, epimodel)
     return solver(df, epimodel, nrow(df))
+end
+
+# https://github.com/cambridge-mlg/Covid19/blob/master/src/utils.jl
+function NegativeBinomial2(mu, phi)
+    p = 1 / (1 + mu / phi)
+    r = phi
+
+    return NegativeBinomial(r, p)
 end
