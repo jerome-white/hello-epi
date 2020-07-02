@@ -17,10 +17,10 @@ parameters = [
 
 function EpiModel(N::Number)
     return function (du, u, p, t)
-        (I, R, D) = u
+        (I, _, _) = u
         (beta, gamma, mu, rho) = p
 
-        S = max(0, N * rho - (I + R + D))
+        S = N * rho - sum(u)
 
         du[2] = I * gamma
         du[3] = I * mu
