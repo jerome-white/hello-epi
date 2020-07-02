@@ -8,8 +8,9 @@ function load(fp, compartments)
     return select(sort(df, [:date]), compartments, copycols=false)
 end
 
-function solver(u0::Vector{Float64}, duration::Number, epimodel)
-    tspan = (0.0, convert(Float64, duration - 1))
+function solver(df::DataFrame, epimodel, duration::Number)
+    u0 = Vector{Float64}(first(df))
+    tspan = (0.0, duration - 1)
 
     return function (p)
         prob = ODEProblem(epimodel, u0, tspan)
@@ -23,10 +24,6 @@ function solver(u0::Vector{Float64}, duration::Number, epimodel)
     end
 end
 
-function solver(df::DataFrame, duration::Number, epimodel)
-    return solver(Vector{Float64}(first(df)), duration, epimodel)
-end
-
 function solver(df::DataFrame, epimodel)
-    return solver(df, nrow(df), epimodel)
+    return solver(df, epimodel, nrow(df))
 end
