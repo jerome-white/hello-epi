@@ -1,3 +1,4 @@
+import shutil as sh
 from pathlib import Path
 from argparse import ArgumentParser
 from multiprocessing import Pool
@@ -7,10 +8,7 @@ from libepi import Logger
 def func(args):
     contents = list(args.iterdir())
     if not any([ x.suffix.endswith('png') for x in contents ]):
-        for i in contents:
-            i.unlink()
-        args.rmdir()
-
+        sh.rmtree(args)
         return args
 
 arguments = ArgumentParser()
