@@ -31,6 +31,11 @@ viz_days=(
     7
     $testing_days
 )
+ci=(
+    0.5
+    0.25
+    0.0
+)
 
 draws=4000
 samples=`bc -l <<< "2000 / $draws"`
@@ -137,26 +142,29 @@ julia project.jl \
 #
 #
 tmp=`mktemp`
+intervals="--ci `sed -e's/ / --ci /g' <<< ${ci[@]}`"
+
 for i in ${viz_days[@]}; do
     fname=`printf "fit-%03d.png" $i`
     cat <<EOF
-python $ROOT/visualization/projection.py \
+python $ROOT/visualization/projection.py $intervals \
        --ground-truth $OUTPUT/cooked.csv \
-       --testing-days $training_days \
-       --project $i \
-       --output $OUTPUT/$fname < \
-       $OUTPUT/projection.csv
+       --validation-days $training_days \
+       --testing-days $i \
+       --output $OUTPUT/$fname \
+       < $OUTPUT/projection.csv
 EOF
 done > $tmp
 
 if [ $disaggregate ]; then
     cat <<EOF >> $tmp
-python $DATA/general/accumulate.py < $OUTPUT/projection.csv | \
-    python $ROOT/visualization/projection.py \
-	   --ground-truth $OUTPUT/raw.csv \
-	   --testing-days $training_days \
-	   --project $testing_days \
-	   --output $OUTPUT/cummulative.png
+python $DATA/general/accumulate.py \
+       < $OUTPUT/projection.csv \
+    | python $ROOT/visualization/projection.py \
+	     --ground-truth $OUTPUT/raw.csv \
+	     --testing-days $training_days \
+	     --project $testing_days \
+	     --output $OUTPUT/cummulative.png
 EOF
 fi
 
