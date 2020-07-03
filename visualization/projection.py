@@ -196,6 +196,7 @@ yticker = plt.FuncFormatter(ytickfmt)
 conf = Confidence(QuantileCalculator(args.ci), index, args.workers)
 
 for (ax, comp) in zip(axes, compartments):
+    Logger.info(comp)
     g = (pr
          .query('{} == @comp'.format(by))
          .filter(items=[index, 'value']))
