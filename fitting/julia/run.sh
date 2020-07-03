@@ -38,7 +38,7 @@ ci=(
 )
 
 draws=4000
-samples=`bc -l <<< "2000 / $draws"`
+samples=1000
 
 #
 #
