@@ -1,14 +1,12 @@
 using
-    CSV,
     Optim,
     Turing,
     ArgParse,
-    # DataFrames,
     Distributions
 
 include("util.jl")
-include("sird.jl")
-# include("ird.jl")
+# include("sird.jl")
+include("ird.jl")
 
 # disable_logging(Logging.Warn)
 
@@ -24,11 +22,6 @@ function cliargs()
         "--population"
         help = "Population"
         arg_type = Int
-
-        "--posterior"
-        help = "Number of samples to take from the posterior"
-        arg_type = Int
-        default = nothing
 
         "--trace"
         help = "File to dump Turing trace information"
@@ -62,6 +55,9 @@ function learn(data, observe, n_samples, workers)
         for i in 1:length(compartments)
             x[:,i] ~ MvNormal(view[i,:], sqrt(sigma[i]))
         end
+        # for i in 1:length(view)
+        #     x[i,:] ~ MvNormal(view[:,i], sqrt.(sigma))
+        # end
     end
 
     model = f(data)
@@ -78,16 +74,7 @@ function main(df, args)
 
     data = Matrix{Float64}(df)
     chains = learn(data, ode, args["draws"], args["workers"])
-    if !isnothing(args["trace"])
-        write(args["trace"], chains)
-    end
-
-    n = args["posterior"]
-    if !isnothing(n) && 0 < n <= length(chains)
-        chains = sample(chains, n)
-    end
-
-    return select(DataFrame(chains), parameters, copycols=false)
+    write(args["trace"], chains)
 end
 
-CSV.write(stdout, main(load(stdin, compartments), cliargs()))
+main(load(read(stdin), compartments), cliargs())
