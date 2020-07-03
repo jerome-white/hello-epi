@@ -15,22 +15,54 @@ function cliargs()
 
         "--samples"
         help = "Number of samples to take from the posterior"
-        arg_type = Float64
-        default = 1.0
+        arg_type = Int
+        default = nothing
     end
 
     return parse_args(s)
 end
 
+function nchain(chn)
+    return size(chn, 3)
+end
+
+function eachchain(chn)
+    Channel() do channel
+        for i in 1:nchain(chn)
+            put!(channel, chn[:, :, i])
+        end
+    end
+end
+
+function spread(chn, samples)
+    if isnothing(samples)
+        samples = length(chn)
+    elseif samples > length(chn)
+        @warn "Possible over sampling"
+    end
+
+    n = nchain(chn)
+    (across, within) = map(x -> x(samples, n), [÷, %])
+
+    assignments = repeat([across], samples)
+    for i in rand(1:samples, within)
+        assignments[i] += 1
+    end
+
+    return assignments
+end
+
 function main(args)
     chn = read(args["trace"], Chains)
-    results = select(DataFrame(chn), parameters, copycols=false)
+    assignments = spread(chn, args["samples"])
 
-    if 0 < args["samples"] < 1
-        samples = nrow(results)
-        n = round(Int, samples * args["samples"])
-        rows = sample(1:samples, n; replace=false)
-        results = results[rows,:]
+    results = DataFrame()
+    for (i, j) in enumerate(eachchain(chn))
+        items = sample(j, assignments[i])
+        df = DataFrame(items)
+        view = select(df, parameters, copycols=false)
+
+        append!(results, view)
     end
 
     return results
