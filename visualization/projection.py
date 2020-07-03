@@ -227,6 +227,6 @@ for (ax, comp) in zip(axes, compartments):
     ax.grid(which='both')
     ax.set_ylabel(comp.title())
     ax.xaxis.label.set_visible(False)
-    # ax.xaxis.set_major_formatter(xticker)
+    ax.xaxis.set_major_formatter(xticker)
     ax.yaxis.set_major_formatter(yticker)
 plt.savefig(args.output)
