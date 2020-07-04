@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from scipy import constants
 from scipy.stats import bayes_mvs
 
-# from libepi import Logger
+from libepi import Logger
 
 #
 #
