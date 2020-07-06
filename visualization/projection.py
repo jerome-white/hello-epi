@@ -191,9 +191,14 @@ pr = pr.melt(id_vars=[index], value_vars=compartments, var_name=by)
 xticker = plt.FuncFormatter(ft.partial(xtickfmt, start=gt.index.min()))
 yticker = plt.FuncFormatter(ytickfmt)
 
+ci = QuantileCalculator(args.ci)
+# ci = BayesCredibleCalculator(args.ci)
+conf = Confidence(ci, index, args.workers)
 
-# conf = Confidence(BayesCredibleCalculator(args.ci), index)
-conf = Confidence(QuantileCalculator(args.ci), index, args.workers)
+gtdots = (
+    ('train', 'g', 'o'),
+    ('test', 'r', '+'),
+)
 
 for (ax, comp) in zip(axes, compartments):
     Logger.info(comp)
@@ -213,15 +218,16 @@ for (ax, comp) in zip(axes, compartments):
     g.groupby(index).mean().plot.line(legend=False, ax=ax)
 
     # Actual data
-    view = gt.query('variable == "{}"'.format(comp))
-    for (c, (_, s)) in zip(('r', 'g'), view.groupby('split')):
-        s.plot.scatter(x=index,
-                       y='value',
-                       s=15,
-                       legend=False,
-                       color=c,
-                       ax=ax,
-                       edgecolor='white')
+    for (i, j, k) in gtdots:
+        view = gt.query('variable == @comp and split == "{}"'.format(i))
+        view.plot.scatter(x=index,
+                          y='value',
+                          s=15,
+                          legend=False,
+                          color=j,
+                          ax=ax,
+                          marker=k,
+                          edgecolor='white')
 
     # Decorations
     ax.grid(which='both')
