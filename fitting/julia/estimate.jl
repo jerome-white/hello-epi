@@ -43,7 +43,12 @@ function learn(data, observe, n_samples, workers)
         for (i, (a, b)) in enumerate(priors())
             theta[i] ~ NamedDist(b, a)
         end
+
         view = observe(theta)
+        if isnothing(view)
+            Turing.acclogp!(_varinfo, -Inf)
+            return
+        end
 
         # likelihood priors
         sigma = Vector{T}(undef, length(compartments))

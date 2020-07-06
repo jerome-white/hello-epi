@@ -16,11 +16,9 @@ function solver(df::DataFrame, epimodel, duration::Number)
         prob = ODEProblem(epimodel, u0, tspan)
 
         s = solve(prob, Rodas4P(); saveat=1, p=p)
-        if s.retcode != :Success
-            ErrorException(String(s.retcode))
+        if s.retcode == :Success
+            return s
         end
-
-        return s
     end
 end
 
