@@ -32,6 +32,9 @@ class IntervalCalculator:
     def __call__(self, alpha, df):
         raise NotImplementedError()
 
+    def aggregate(self, df):
+        raise NotImplementedError()
+
     @staticmethod
     def build(dtype, *args, **kwargs):
         available = {
@@ -59,6 +62,9 @@ class QuantileCalculator(IntervalCalculator):
 
         return Band(*map(calculate, (op.sub, op.add)))
 
+    def aggregate(self, df):
+        return df.median()
+
 class BayesCredibleCalculator(IntervalCalculator):
     def __init__(self, alpha):
         super().__init__(sorted(alpha))
@@ -74,6 +80,9 @@ class BayesCredibleCalculator(IntervalCalculator):
 
         return Band(lower, upper)
 
+    def aggregate(self, df):
+        return df.mean()
+
 class ConfidenceIntervalCalculator(IntervalCalculator):
     def __init__(self, alpha):
         super().__init__(sorted(map(lambda x: 1 - x, alpha)))
@@ -83,6 +92,9 @@ class ConfidenceIntervalCalculator(IntervalCalculator):
         (lower, upper) = stats.tconfint_mean(alpha=alpha)
 
         return Band(lower, upper)
+
+    def aggregate(self, df):
+        return df.mean()
 
 #
 #
@@ -118,6 +130,9 @@ class Confidence:
                         .sort_index())
 
                 yield data
+
+    def aggregate(self, df):
+        return self.icalc.aggregate(df)
 
 def labeller(x, testing):
     days = pd.Timedelta(testing, unit='D')
@@ -240,7 +255,8 @@ for (ax, comp) in zip(axes, compartments):
                         alpha=0.2)
 
     # Estimate
-    g.groupby(index).mean().plot.line(legend=False, ax=ax)
+    agg = conf.aggregate(g.groupby(index))
+    agg.plot.line(legend=False, ax=ax)
 
     # Actual data
     for (i, j, k) in gtdots:
