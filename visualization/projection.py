@@ -32,6 +32,19 @@ class IntervalCalculator:
     def __call__(self, alpha, df):
         raise NotImplementedError()
 
+    @staticmethod
+    def build(dtype, *args, **kwargs):
+        available = {
+            'quantile': QuantileCalculator,
+            'credible': BayesCredibleCalculator,
+            'confidence': ConfidenceIntervalCalculator,
+        }
+
+        if dtype not in available:
+            raise TypeError('Unsupported confidence "{}"'.format(dtype))
+
+        return available[dtype](*args, **kwargs)
+
 class QuantileCalculator(IntervalCalculator):
     def __init__(self, alpha):
         # super().__init__(reversed(sorted(alpha)))
@@ -140,6 +153,7 @@ def ytickfmt(x, pos):
             return '{:.0f}{}'.format(x / mag, j)
 
 arguments = ArgumentParser()
+arguments.add_argument('--confidence', default='quantile')
 arguments.add_argument('--output', type=Path)
 arguments.add_argument('--ground-truth', type=Path)
 arguments.add_argument('--training-days', type=int)
@@ -202,7 +216,7 @@ pr = pr.melt(id_vars=[index], value_vars=compartments, var_name=by)
 xticker = plt.FuncFormatter(ft.partial(xtickfmt, start=gt.index.min()))
 yticker = plt.FuncFormatter(ytickfmt)
 
-ci = QuantileCalculator(args.ci)
+ci = IntervalCalculator.build(args.confidence, args.ci)
 # ci = BayesCredibleCalculator(args.ci)
 conf = Confidence(ci, index, args.workers)
 
