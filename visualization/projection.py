@@ -276,4 +276,5 @@ for (ax, comp) in zip(axes, compartments):
     ax.xaxis.label.set_visible(False)
     ax.xaxis.set_major_formatter(xticker)
     ax.yaxis.set_major_formatter(yticker)
+plt.tight_layout()
 plt.savefig(args.output)
