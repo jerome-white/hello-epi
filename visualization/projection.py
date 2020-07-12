@@ -13,6 +13,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import constants
 from scipy.stats import bayes_mvs
+from statsmodels.stats.weightstats import DescrStatsW
 
 from libepi import Logger
 
@@ -57,6 +58,16 @@ class BayesCredibleCalculator(IntervalCalculator):
             except RuntimeWarning:
                 raise ValueError()
         (_, (lower, upper)) = mean
+
+        return Band(lower, upper)
+
+class ConfidenceIntervalCalculator(IntervalCalculator):
+    def __init__(self, alpha):
+        super().__init__(sorted(map(lambda x: 1 - x, alpha)))
+
+    def __call__(self, alpha, df):
+        stats = DescrStatsW(df)
+        (lower, upper) = stats.tconfint_mean(alpha=alpha)
 
         return Band(lower, upper)
 
