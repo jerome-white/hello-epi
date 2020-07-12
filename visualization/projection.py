@@ -17,6 +17,10 @@ from statsmodels.stats.weightstats import DescrStatsW
 
 from libepi import Logger
 
+SplitDecoration = cl.namedtuple('SplitDecoration',
+                                'split, color, marker',
+                                defaults=['o'])
+
 #
 #
 #
@@ -195,6 +199,7 @@ gt = (pd
       .set_index(idx)
       .assign(**assign))
 assert not gt.empty
+days = gt[index].max()
 
 #
 #
@@ -210,15 +215,6 @@ if args.with_susceptible:
     compartments.appendleft('susceptible')
 pr = pr.filter(items=it.chain(compartments, [index]))
 
-days = gt[index].max()
-if args.training_days is None:
-    lower = 0
-else:
-    lower = days - args.validation_days - args.training + 1
-upper = days + args.testing_days
-gt = gt.query('{1} <= {0}'.format(index, lower))
-pr = pr.query('{1} <= {0} <= {2}'.format(index, lower, upper))
-
 compartments = list(it.filterfalse(lambda x: x == index, pr.columns))
 by = 'compartment'
 pr = pr.melt(id_vars=[index], value_vars=compartments, var_name=by)
@@ -226,55 +222,89 @@ pr = pr.melt(id_vars=[index], value_vars=compartments, var_name=by)
 #
 #
 #
-(_, axes) = plt.subplots(nrows=len(compartments), sharex=True)
+ncols = 2
+(fig, axes) = plt.subplots(nrows=len(compartments),
+                           ncols=ncols,
+                           sharex='col',
+                           squeeze=False,
+                           gridspec_kw={
+                               'wspace': 0.2,
+                               'width_ratios': [2.5, 1],
+                           })
+(width, _) = fig.get_size_inches()
+fig.set_figwidth(width * 1.5)
 
 xticker = plt.FuncFormatter(ft.partial(xtickfmt, start=gt.index.min()))
 yticker = plt.FuncFormatter(ytickfmt)
 
 ci = IntervalCalculator.build(args.confidence, args.ci)
-# ci = BayesCredibleCalculator(args.ci)
 conf = Confidence(ci, index, args.workers)
 
-gtdots = (
+#
+#
+#
+gtdots = list(it.starmap(SplitDecoration, (
     ('train', 'g', 'o'),
     ('test', 'r', '+'),
+)))
+
+starts = (
+    0,
+    days - (args.validation_days * 2),
 )
+assert not any(map(lambda x: x < 0, starts))
+upper = days + args.testing_days
 
-for (ax, comp) in zip(axes, compartments):
+for (col, comp) in zip(it.count(0, ncols), compartments):
     Logger.info(comp)
-    g = (pr
-         .query('{} == @comp'.format(by))
-         .filter(items=[index, 'value']))
 
-    # Uncertainty
-    for i in conf.intervals(g, 'value'):
-        ax.fill_between(i.index,
-                        i['lower'],
-                        i['upper'],
-                        color='gray',
-                        alpha=0.2)
+    iterable = it.islice(axes.ravel(), col, col + ncols)
+    for (i, (lower, ax)) in enumerate(zip(starts, iterable)):
+        query = [
+            '{1} <= {0} <= {2}'.format(index, lower, upper),
+            '{} == "{}"'.format(by, comp),
+        ]
+        view = (pr
+                .query(' and '.join(query))
+                .filter(items=[index, 'value']))
 
-    # Estimate
-    agg = conf.aggregate(g.groupby(index))
-    agg.plot.line(legend=False, ax=ax)
+        # Uncertainty
+        for u in conf.intervals(view, 'value'):
+            ax.fill_between(u.index,
+                            u['lower'],
+                            u['upper'],
+                            color='gray',
+                            alpha=0.2)
 
-    # Actual data
-    for (i, j, k) in gtdots:
-        view = gt.query('variable == @comp and split == "{}"'.format(i))
-        view.plot.scatter(x=index,
-                          y='value',
-                          s=15,
-                          legend=False,
-                          color=j,
-                          ax=ax,
-                          marker=k,
-                          edgecolor='white')
+        # Estimate
+        agg = conf.aggregate(view.groupby(index))
+        agg.plot.line(legend=False, ax=ax)
 
-    # Decorations
-    ax.grid(which='both')
-    ax.set_ylabel(comp.title())
-    ax.xaxis.label.set_visible(False)
-    ax.xaxis.set_major_formatter(xticker)
-    ax.yaxis.set_major_formatter(yticker)
-plt.tight_layout()
-plt.savefig(args.output)
+        # Actual data
+        query = [
+            '{1} <= {0}'.format(index, lower),
+            'variable == "{}"'.format(comp),
+        ]
+        s = 15 * (1 + i)
+
+        for sd in gtdots:
+            q = it.chain(query, [
+                'split == "{}"'.format(sd.split)
+            ])
+            view = gt.query(' and '.join(q))
+            view.plot.scatter(x=index,
+                              y='value',
+                              legend=False,
+                              color=sd.color,
+                              s=s,
+                              ax=ax,
+                              marker=sd.marker,
+                              edgecolor='white')
+
+        # Decorations
+        ax.set_ylabel('' if i else comp.title())
+        ax.grid(which='both')
+        ax.xaxis.label.set_visible(False)
+        ax.xaxis.set_major_formatter(xticker)
+        ax.yaxis.set_major_formatter(yticker)
+plt.savefig(args.output, bbox_inches='tight')
