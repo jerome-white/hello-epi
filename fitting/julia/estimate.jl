@@ -66,7 +66,8 @@ function learn(data, observe, n_samples, workers)
     end
 
     model = f(data)
-    sampler = NUTS(round(Int, n_samples * 0.25), 0.65)
+    sampler = NUTS(round(Int, n_samples * 0.25), 0.65;
+                   max_depth=10)
     parallel_type = MCMCThreads()
 
     return sample(model, sampler, parallel_type, n_samples, workers;
