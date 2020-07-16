@@ -6,8 +6,7 @@ using
     Base.Threads
 
 include("util.jl")
-# include("sird.jl")
-include("ird.jl")
+include("modeler.jl")
 
 function cliargs()
     s = ArgParseSettings()
@@ -28,24 +27,31 @@ function cliargs()
         "--population"
         help = "Population"
         arg_type = Int
+
+        "--lead"
+        help = "Lead time"
+        arg_type = Int
     end
 
     return parse_args(s)
 end
 
 function main(df, args)
-    reference = load(args["observations"], compartments)
+    model = build()
+    compartments = nobserved(model)
+    reference = load(args["observations"], model)
 
     idxcols = [
         :run,
         :day,
     ]
     n = length(idxcols)
+    left = n + 1
 
     days = nrow(reference) + args["forward"]
     dimensions = (
         nrow(df) * days,
-        n + length(compartments),
+        n + compartments,
     )
     buffer = SharedArray{Float64}(dimensions)
 
@@ -53,8 +59,8 @@ function main(df, args)
     index = range(args["offset"], stop=stop)
 
     @threads for i in 1:nrow(df)
-        epimodel = EpiModel(args["population"])
-        ode = solver(reference, epimodel, days)
+        ode = solver(model, args["population"], days;
+                     lead_time=args["lead"])
         sol = ode(convert(Vector, df[i,:]))
 
         bottom = i * days
@@ -62,16 +68,11 @@ function main(df, args)
 
         order = repeat([i], days)
         buffer[top:bottom,1:n] = hcat(order, index)
-
-        left = n + 1
-        for j in 1:length(compartments)
-            buffer[top:bottom,left] = sol[j,:]
-            left += 1
-        end
+        buffer[top:bottom,left:end] = sol
     end
 
     projections = DataFrame(buffer)
-    rename!(projections, vcat(idxcols, compartments))
+    rename!(projections, vcat(idxcols, observed(model)))
 
     return projections
 end
