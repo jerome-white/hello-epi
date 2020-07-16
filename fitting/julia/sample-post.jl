@@ -35,13 +35,15 @@ function eachchain(chn)
 end
 
 function spread(chn, samples)
+    m = length(chn)
+    n = nchain(chn)
+
     if isnothing(samples)
-        samples = length(chn)
-    elseif samples > length(chn)
+        samples = m
+    elseif samples > m * n
         @warn "Possible over sampling"
     end
 
-    n = nchain(chn)
     (across, within) = map(x -> x(samples, n), [÷, %])
 
     assignments = repeat([across], samples)
