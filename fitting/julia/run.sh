@@ -26,6 +26,7 @@ fi
 
 disaggregate=
 smooth=
+lead_time=20
 training_days=5
 testing_days=21
 viz_days=(
@@ -112,6 +113,7 @@ echo "[ `date` RESULTS ] Estimate"
 julia estimate.jl $trace_opt \
       --draws $draws \
       --population $population \
+      --lead $lead_time \
       < $OUTPUT/training.csv \
     || exit
 
@@ -135,6 +137,7 @@ julia project.jl \
       --population $population \
       --offset $offset \
       --forward $testing_days \
+      --lead $lead_time \
       --observations $OUTPUT/training.csv \
       < $OUTPUT/params.csv \
       > $OUTPUT/projection.csv
