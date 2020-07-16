@@ -38,8 +38,8 @@ ci=(
     0.0
 )
 
-draws=4000
-samples=1000
+draws=10000
+samples=`expr $JULIA_NUM_THREADS \* 2000`
 
 #
 #
