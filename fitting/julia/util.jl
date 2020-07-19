@@ -26,7 +26,7 @@ function solver(model::EpiModel, population::Int, duration::Int;
                     saveat=saveat, p=p)
 
         return sol.retcode == :Success ?
-            permutedims(sol[compartments,:]) :
+            transpose(sol[compartments,:]) :
             nothing
     end
 end
