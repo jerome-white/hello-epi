@@ -9,7 +9,7 @@ compartments = [
 ]
 
 parameters = [
-    :beta,
+    :r0,
     :gamma,
     :mu,
     :rho,
@@ -18,9 +18,11 @@ parameters = [
 function EpiModel(N::Number)
     return function (du, u, p, t)
         (I, _, _) = u
-        (beta, gamma, mu, rho) = p
+        (r0, gamma, mu, rho) = p
+        (gamma, mu) = ./(1, [gamma, mu])
 
         S = N * rho - sum(u)
+        beta = r0 * gamma
 
         du[2] = I * gamma
         du[3] = I * mu
@@ -30,12 +32,9 @@ end
 
 function priors()
     dists = (
-        # truncated(Exponential(1 / 10), 0, 20),
-        # truncated(Exponential(1 / 14), 0, 20),
-        # truncated(Exponential(1 / 600), 0, 1),
-        Uniform(0.0, 10.0),
-        Uniform(0.0, 5.0),
-        Uniform(0.0, 2.0),
+        truncated(Normal(1, 1), 0, Inf),
+        truncated(Erlang(3, 14 / 3), 1, Inf),
+        truncated(Erlang(2, 20 / 2), 1, Inf),
         Uniform(0.0, 1.0),
     )
 
