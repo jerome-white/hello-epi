@@ -27,7 +27,7 @@ fi
 disaggregate=
 smooth=
 lead_time=20
-training_days=5
+validation_days=5
 testing_days=21
 viz_days=(
     7
@@ -53,7 +53,7 @@ mkdir --parents $OUTPUT
 echo "[ `date` RESULTS ] $OUTPUT"
 
 cat <<EOF > $OUTPUT/README
-training days: $training_days
+validation days: $validation_days
 smoothing: $smooth
 disaggregate: $disaggregate
 EOF
@@ -101,7 +101,7 @@ if [ $smooth ]; then
 else
     tee
 fi < $OUTPUT/cooked.csv \
-    | head --lines=-$training_days \
+    | head --lines=-$validation_days \
 	   > $OUTPUT/training.csv
 
 #
@@ -153,7 +153,7 @@ for i in ${viz_days[@]}; do
     cat <<EOF
 python $ROOT/visualization/projection.py $intervals \
        --ground-truth $OUTPUT/cooked.csv \
-       --validation-days $training_days \
+       --validation-days $validation_days \
        --testing-days $i \
        --output $OUTPUT/$fname \
        < $OUTPUT/projection.csv
@@ -166,7 +166,7 @@ python $DATA/general/accumulate.py \
        < $OUTPUT/projection.csv \
     | python $ROOT/visualization/projection.py \
 	     --ground-truth $OUTPUT/raw.csv \
-	     --testing-days $training_days \
+	     --testing-days $validation_days \
 	     --project $testing_days \
 	     --output $OUTPUT/cummulative.png
 EOF
