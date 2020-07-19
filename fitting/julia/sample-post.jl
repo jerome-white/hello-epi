@@ -1,10 +1,10 @@
 using
     CSV,
     ArgParse,
+    DataFrames,
     MCMCChains
 
-# include("sird.jl")
-include("ird.jl")
+include("modeler.jl")
 
 function cliargs()
     s = ArgParseSettings()
@@ -56,12 +56,13 @@ function main(args)
     chn = read(args["trace"], Chains)
     assignments = spread(chn, args["samples"])
 
+    model = build()
     results = DataFrame()
+
     for (i, j) in enumerate(eachchain(chn))
         items = sample(j, assignments[i])
         df = DataFrame(items)
-        view = select(df, parameters, copycols=false)
-
+        view = select(df, parameters(model), copycols=false)
         append!(results, view)
     end
 

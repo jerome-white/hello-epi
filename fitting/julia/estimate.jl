@@ -5,8 +5,7 @@ using
     Distributions
 
 include("util.jl")
-# include("sird.jl")
-include("ird.jl")
+include("modeler.jl")
 
 # disable_logging(Logging.Warn)
 
@@ -23,6 +22,10 @@ function cliargs()
         help = "Population"
         arg_type = Int
 
+        "--lead"
+        help = "Population"
+        arg_type = Int
+
         "--trace"
         help = "File to dump Turing trace information"
         default = nothing
@@ -36,11 +39,11 @@ function cliargs()
     return parse_args(s)
 end
 
-function learn(data, observe, n_samples, workers)
+function learn(data, epimodel, observe, n_samples, workers)
     @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
-        theta = Vector{T}(undef, length(parameters))
-        for (i, (a, b)) in enumerate(priors())
+        theta = Vector{T}(undef, nparameters(epimodel))
+        for (i, (a, b)) in enumerate(priors(epimodel))
             theta[i] ~ NamedDist(b, a)
         end
 
@@ -49,19 +52,20 @@ function learn(data, observe, n_samples, workers)
             Turing.acclogp!(_varinfo, -Inf)
             return
         end
+        compartments = nobserved(epimodel)
 
         # likelihood priors
-        sigma = Vector{T}(undef, length(compartments))
+        sigma = Vector{T}(undef, compartments)
         for i in 1:length(sigma)
             sigma[i] ~ InverseGamma(2, 1)
         end
 
         # likelihood
-        for i in 1:length(compartments)
-            x[:,i] ~ MvNormal(view[i,:], sqrt(sigma[i]))
+        for i in 1:compartments
+            x[:,i] ~ MvNormal(view[:,i], sqrt(sigma[i]))
         end
         # for i in 1:length(view)
-        #     x[i,:] ~ MvNormal(view[:,i], sqrt.(sigma))
+        #     x[:,i] ~ MvNormal(view[i,:], sqrt.(sigma))
         # end
     end
 
@@ -71,16 +75,18 @@ function learn(data, observe, n_samples, workers)
     parallel_type = MCMCThreads()
 
     return sample(model, sampler, parallel_type, n_samples, workers;
-                  drop_warmup=true)
+                  drop_warmup=true,
+                  progress=false)
 end
 
-function main(df, args)
-    epimodel = EpiModel(args["population"])
-    ode = solver(df, epimodel)
-
+function main(args, fp)
+    epimodel = build()
+    df = load(read(fp), epimodel)
+    ode = solver(epimodel, args["population"], df;
+                 lead_time=args["lead"])
     data = Matrix{Float64}(df)
-    chains = learn(data, ode, args["draws"], args["workers"])
+    chains = learn(data, epimodel, ode, args["draws"], args["workers"])
     write(args["trace"], chains)
 end
 
-main(load(read(stdin), compartments), cliargs())
+main(cliargs(), stdin)
