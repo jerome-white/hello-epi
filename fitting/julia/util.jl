@@ -11,10 +11,10 @@ function load(file, model::EpiModel)
 end
 
 function solver(model::EpiModel, population::Int, duration::Int;
-                lead_time::Int=1, initial_exposed::Number=1)
+                lead_time::Int=1, initial_infected::Int=1)
     u0 = zeros(ncompartments(model))
-    u0[1] = population - initial_exposed
-    u0[2] = initial_exposed
+    u0[3] = initial_infected
+    u0[1] = population - sum(u0)
 
     saveat = range(lead_time, length=duration)
     tspan = (0.0, maximum(saveat))
@@ -32,7 +32,7 @@ function solver(model::EpiModel, population::Int, duration::Int;
 end
 
 function solver(model::EpiModel, population::Int, df::DataFrame;
-                lead_time::Int=1, initial_exposed::Number=1)
+                lead_time::Int=1, initial_infected::Number=1)
     return solver(model, population, nrow(df);
-                  lead_time=lead_time, initial_exposed=initial_exposed)
+                  lead_time=lead_time, initial_infected=initial_infected)
 end
