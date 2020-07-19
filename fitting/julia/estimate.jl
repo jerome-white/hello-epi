@@ -75,7 +75,8 @@ function learn(data, epimodel, observe, n_samples, workers)
     parallel_type = MCMCThreads()
 
     return sample(model, sampler, parallel_type, n_samples, workers;
-                  drop_warmup=true)
+                  drop_warmup=true,
+                  progress=false)
 end
 
 function main(args, fp)
