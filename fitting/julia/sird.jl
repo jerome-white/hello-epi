@@ -1,21 +1,24 @@
-using
-    DataFrames,
-    Distributions
+using Distributions
 
-compartments = [
-    :susceptible,
-    :infected,
-    :recovered,
-    :deceased,
-]
+include("epimodel.jl")
 
-parameters = [
-    :beta,
-    :gamma,
-    :mu,
-]
+function build()
+    compartments = (
+        (:susceptible, false),
+        (:infected,    true),
+        (:recovered,   true),
+        (:deceased,    true),
+    )
+    parameters = (
+        (:beta,  Uniform(0.0, 10.0)),
+        (:gamma, Uniform(0.0,  2.0)),
+        (:mu,    Uniform(0.0,  1.0)),
+    )
 
-function EpiModel(N::Number)
+    return EpiModel(compartments, parameters)
+end
+
+function play(N::Int)
     return function (du, u, p, t)
         (S, I, _, _) = u
         (beta, gamma, mu) = p
@@ -26,23 +29,5 @@ function EpiModel(N::Number)
         du[3] = gamma * I
         du[4] = mu * I
         du[2] = dS - du[3] - du[4]
-    end
-end
-
-function EpiModel(df::DataFrame)
-    return EpiModel(maximum(sum.(eachrow(df))))
-end
-
-function priors()
-    dists = (
-        Uniform(0.0, 10.0),
-        Uniform(0.0, 2.0),
-        Uniform(0.0, 1.0),
-    )
-
-    Channel() do channel
-        for i in zip(parameters, dists)
-            put!(channel, i)
-        end
     end
 end
