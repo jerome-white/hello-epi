@@ -32,13 +32,13 @@ lead_time=20
 validation_days=5
 testing_days=21
 viz_days=(
+    0
     7
     $testing_days
 )
 ci=(
-    0.5
-    0.25
-    0.0
+    quantile:0.20,0.10,0.01
+    credible:0.60,0.89,0.99
 )
 julia_model=seird.jl
 
@@ -153,22 +153,29 @@ julia project.jl \
 #
 #
 tmp=`mktemp`
-intervals="--ci `sed -e's/ / --ci /g' <<< ${ci[@]}`"
 
 for i in ${viz_days[@]}; do
-    fname=`printf "fit-%03d.png" $i`
-    cat <<EOF
-python $ROOT/visualization/projection.py $intervals \
+    for j in ${ci[@]}; do
+	parts=( `sed -e's/:/ /g' <<< $j` )
+	intervals=`sed -e's/,/ --ci /g' <<< ${parts[1]}`
+	output=`printf "%s/fit/%s/%03d.png" $OUTPUT ${parts[0]} $i`
+	mkdir --parents `dirname $output`
+
+	cat <<EOF
+python $ROOT/visualization/projection.py \
+       --ci $intervals \
+       --confidence ${parts[0]} \
        --ground-truth $OUTPUT/cooked.csv \
        --validation-days $validation_days \
        --testing-days $i \
-       --output $OUTPUT/$fname \
+       --output $output \
        < $OUTPUT/projection.csv
 EOF
-done > $tmp
+    done
+done >> $tmp
 
 if [ $disaggregate ]; then
-    cat <<EOF >> $tmp
+    cat <<EOF
 python $DATA/general/accumulate.py \
        < $OUTPUT/projection.csv \
     | python $ROOT/visualization/projection.py \
@@ -177,7 +184,7 @@ python $DATA/general/accumulate.py \
 	     --project $testing_days \
 	     --output $OUTPUT/cummulative.png
 EOF
-fi
+fi >> $tmp
 
 parallel --will-cite --line-buffer :::: $tmp
 rm $tmp
