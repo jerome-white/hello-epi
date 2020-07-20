@@ -9,6 +9,8 @@ export PYTHONLOGLEVEL=debug
 export PYTHONPATH=$ROOT
 export JULIA_NUM_THREADS=`nproc`
 
+JULIA_VIRTUAL_MODEL=modeler.jl
+
 #
 #
 #
@@ -38,6 +40,7 @@ ci=(
     0.25
     0.0
 )
+julia_model=seird.jl
 
 draws=10000
 samples=`expr $JULIA_NUM_THREADS \* 2000`
@@ -57,6 +60,10 @@ validation days: $validation_days
 smoothing: $smooth
 disaggregate: $disaggregate
 EOF
+
+rm --force $JULIA_VIRTUAL_MODEL
+ln --symbolic $julia_model $JULIA_VIRTUAL_MODEL
+cp $julia_model $OUTPUT
 
 #
 # Get the data
