@@ -128,12 +128,11 @@ class Confidence:
             for i in self.icalc:
                 iterable = it.starmap(lambda x, y: (i, x, y[value]), groups)
                 records = filter(None, pool.imap_unordered(self, iterable))
-                data = (pd
-                        .DataFrame
-                        .from_records(records, index=self.index)
-                        .sort_index())
-
-                yield data
+                data = pd.DataFrame.from_records(records)
+                if not data.empty:
+                    yield (data
+                           .set_index(self.index)
+                           .sort_index())
 
     def aggregate(self, df):
         return self.icalc.aggregate(df)
