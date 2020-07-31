@@ -11,12 +11,19 @@ def func(args):
     (key, value, group) = args
     Logger.info(value)
 
+    infected = 'infected'
+    adjust = lambda x: x[infected] - (x['recovered'] + x['deceased'])
+
     return (group
             .set_index('day')
             .sort_index()
             .drop(columns=key)
             .cumsum()
-            .assign(**{key: value})
+            .assign(**{
+                key: value,
+                infected: adjust,
+            })
+            .clip(0)
             .reset_index()
             .to_dict(orient='records'))
 
