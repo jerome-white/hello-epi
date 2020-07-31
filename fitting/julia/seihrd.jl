@@ -12,12 +12,12 @@ function build()
     )
 
     parameters = (
-        (:r0,         truncated(Normal(2.2, 0.5), 0, 7)),
-        (:population, Uniform(0.0, 0.1)),
-        (:survival,   Uniform(0.0, 1.0)),
-        (:incubation, LogNormal(1.63, 0.41)),
-        (:infectious, erl(9, 20, 1, 20)),
-        (:fatality,   erl(14, 10, 6, 40)),
+        (:contacts,     positive(GammaMeanStd(40, 20); upper=200)),
+        (:transmission, Beta(2, 5)),
+        (:fatality,     Beta(0.25, 4)),
+        (:incubation,   GammaMeanVariance(5.5, 6.5)),
+        (:infectious,   CauchyIQR(IQR(5.7, 8.5))),
+        (:recovery,     GammaMeanVariance(9.1, 14.7)),
     )
 
     return EpiModel(compartments, parameters)
@@ -27,19 +27,18 @@ function play(N::Int)
     return function (du, u, p, t)
         (S, E, I, H, _, _) = u
         (alpha, gamma, mu) = ./(1, p[end-2:end])
-        (beta, population) = .*((gamma, N), p[1:2])
+        beta = p[1] * p[2]
 
-        dS = beta * S * I / population
+        dS =  beta * S * I / N
         dE = alpha * E
         dI = gamma * I
-        dH = (1 - p[3]) * dI
+        dH =    mu * H
 
-        du[5] = p[3] * dI
-        du[6] = mu * H
-
-        du[1] = -dS
-        du[2] =  dS - dE
-        du[3] =  dE - dH - du[5]
-        du[4] =  dH - du[6]
+        du[1] =    - dS
+        du[2] = dS - dE
+        du[3] = dE - dI
+        du[4] = dI - dH
+        du[5] = (1 - p[3]) * dH
+        du[6] =      p[3]  * dH
     end
 end
