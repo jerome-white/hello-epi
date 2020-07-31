@@ -1,11 +1,5 @@
-using Distributions
-
 include("epimodel.jl")
-
-function erl(mean, shape, lower, upper)
-    rate = mean / shape
-    return truncated(Erlang(shape, rate), lower, upper)
-end
+include("distutils.jl")
 
 function build()
     compartments = (
