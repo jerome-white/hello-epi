@@ -56,8 +56,8 @@ function learn(data, epimodel, observe, n_samples, workers)
 
         # likelihood priors
         sigma = Vector{T}(undef, compartments)
-        for i in 1:length(sigma)
-            sigma[i] ~ InverseGamma(2, 1)
+        for (i, j) in zip(1:compartments, [1, 2, 2])
+            sigma[i] ~ InverseGamma(j, 1)
         end
 
         # likelihood
