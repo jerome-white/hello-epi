@@ -47,8 +47,8 @@ function learn(data, epimodel, observe, n_samples, workers)
             theta[i] ~ NamedDist(b, a)
         end
 
-        view = observe(theta)
-        if isnothing(view)
+        obs = observe(theta)
+        if isnothing(obs)
             Turing.acclogp!(_varinfo, -Inf)
             return
         end
@@ -62,10 +62,10 @@ function learn(data, epimodel, observe, n_samples, workers)
 
         # likelihood
         for i in 1:compartments
-            x[:,i] ~ MvNormal(view[:,i], sqrt(sigma[i]))
+            x[:,i] ~ MvNormal(view(obs, :, i), sqrt(sigma[i]))
         end
-        # for i in 1:length(view)
-        #     x[:,i] ~ MvNormal(view[i,:], sqrt.(sigma))
+        # for i in 1:first(size(view))
+        #     x[i,:] ~ MvNormal(view(obs, i, :), sqrt.(sigma))
         # end
     end
 
