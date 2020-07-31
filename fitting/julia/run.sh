@@ -40,7 +40,7 @@ ci=(
     quantile:0.20,0.10,0.01
     credible:0.60,0.89,0.99
 )
-julia_model=seird.jl
+julia_model=seihrd.jl
 
 draws=10000
 samples=`expr $JULIA_NUM_THREADS \* 2000`
@@ -62,7 +62,7 @@ disaggregate: $disaggregate
 EOF
 
 rm --force $JULIA_VIRTUAL_MODEL
-ln --symbolic $julia_model $JULIA_VIRTUAL_MODEL
+ln --symbolic $julia_model $JULIA_VIRTUAL_MODEL || exit
 cp $julia_model $OUTPUT
 
 #
