@@ -61,7 +61,7 @@ function main(df, args)
     @threads for i in 1:nrow(df)
         ode = solver(model, args["population"], days;
                      lead_time=args["lead"])
-        sol = ode(convert(Vector, df[i,:]))
+        sol = ode(convert(Vector, view(df, i, :)))
 
         bottom = i * days
         top = bottom - days + 1
