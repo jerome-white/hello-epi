@@ -3,14 +3,16 @@ using
     StatsPlots,
     MCMCChains
 
+include("util.jl")
+
 ENV["GKSwstype"] = "100"
 
 function cliargs()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        "--trace"
-        help = "Trace file"
+        "--chains"
+        help = "Directory of chains"
 
         "--output"
         help = "Figure to generate"
@@ -20,7 +22,7 @@ function cliargs()
 end
 
 function main(args)
-    chn = read(args["trace"], Chains)
+    chn = catchains(args["chains"])
     savefig(plot(chn), args["output"])
 end
 

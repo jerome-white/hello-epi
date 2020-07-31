@@ -4,14 +4,15 @@ using
     DataFrames,
     MCMCChains
 
+include("util.jl")
 include("modeler.jl")
 
 function cliargs()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        "--trace"
-        help = "Trace file"
+        "--chains"
+        help = "Directory of chains"
 
         "--samples"
         help = "Number of samples to take from the posterior"
@@ -55,7 +56,7 @@ function spread(chn, samples)
 end
 
 function main(args)
-    chn = read(args["trace"], Chains)
+    chn = catchains(args["chains"])
     assignments = spread(chn, args["samples"])
 
     model = build()

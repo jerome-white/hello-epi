@@ -29,17 +29,12 @@ function cliargs()
         "--trace"
         help = "File to dump Turing trace information"
         default = nothing
-
-        "--workers"
-        help = "Number of parallel workers for sampling"
-        arg_type = Int
-        default = length(Sys.cpu_info())
     end
 
     return parse_args(s)
 end
 
-function learn(data, epimodel, observe, n_samples, workers)
+function learn(data, epimodel, observe, n_samples)
     @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
         theta = Vector{T}(undef, nparameters(epimodel))
@@ -70,11 +65,11 @@ function learn(data, epimodel, observe, n_samples, workers)
     end
 
     model = f(data)
-    sampler = NUTS(round(Int, n_samples * 0.25), 0.65;
+    n_adapts = round(Int, n_samples * 0.25)
+    sampler = NUTS(n_adapts, 0.65;
                    max_depth=10)
-    parallel_type = MCMCThreads()
 
-    return sample(model, sampler, parallel_type, n_samples, workers;
+    return sample(model, sampler, n_samples + n_adapts;
                   drop_warmup=true,
                   progress=false)
 end
@@ -85,7 +80,7 @@ function main(args, fp)
     ode = solver(epimodel, args["population"], df;
                  lead_time=args["lead"])
     data = Matrix{Float64}(df)
-    chains = learn(data, epimodel, ode, args["draws"], args["workers"])
+    chains = learn(data, epimodel, ode, args["draws"])
     write(args["trace"], chains)
 end
 

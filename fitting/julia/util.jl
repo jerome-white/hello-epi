@@ -1,5 +1,7 @@
 using
     CSV,
+    Turing,
+    MCMCChains,
     DataFrames,
     DifferentialEquations
 
@@ -8,6 +10,25 @@ include("modeler.jl")
 function load(file, model::EpiModel)
     df = CSV.File(file) |> DataFrame!
     return select(sort(df, [:date]), observed(model); copycols=false)
+end
+
+function catchains(dir::String)
+    chains = Vector{Chains}()
+
+    for (root, dirs, files) in walkdir(dir)
+        for i in files
+            file = joinpath(root, i)
+            try
+                push!(chains, read(file, Chains))
+            catch err
+                if isa(err, EOFError)
+                    continue
+                end
+            end
+        end
+    end
+
+    return reduce(chainscat, chains)
 end
 
 function solver(model::EpiModel, population::Int, duration::Int;

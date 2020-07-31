@@ -114,23 +114,37 @@ fi < $OUTPUT/cooked.csv \
 #
 #
 #
-trace_opt="--trace $OUTPUT/chains.jls"
+logs=$OUTPUT/logs
+chains=$OUTPUT/chains
+for i in $logs $chains; do
+    mkdir $i
+done
 
 echo "[ `date` RESULTS ] Estimate"
-julia estimate.jl $trace_opt \
+for i in $(seq $(nproc)); do
+    trace=`mktemp --tmpdir=$chains XXX`
+    log=$logs/`basename $trace`
+
+    cat <<EOF
+julia estimate.jl \
+      --trace ${trace}.cls \
       --draws $draws \
       --population $population \
       --lead $lead_time \
       < $OUTPUT/training.csv \
-    || exit
+      &> ${log}.log
+EOF
+done | parallel --will-cite --delay 5.2
 
 #
 #
 #
+chain_opt="--chains $chains"
+
 echo "[ `date` RESULTS ] Evaluate"
 cat <<EOF | parallel --will-cite --line-buffer
-julia model-explorer.jl $trace_opt --output $OUTPUT/trace.png
-julia sample-post.jl $trace_opt --samples $samples > $OUTPUT/params.csv
+julia model-explorer.jl $chain_opt --output $OUTPUT/trace.png
+julia sample-post.jl $chain_opt --samples $samples > $OUTPUT/params.csv
 EOF
 
 #
