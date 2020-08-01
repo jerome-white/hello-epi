@@ -158,10 +158,10 @@ def ytickfmt(x, pos):
     y = abs(x)
     support = (
          '',
-	'K',
-	'M',
-	'B',
-	'T',
+        'K',
+        'M',
+        'B',
+        'T',
     )
     iterable = it.starmap(lambda x, y: (x * 3, y), enumerate(support))
 
