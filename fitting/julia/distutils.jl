@@ -27,7 +27,7 @@ function GammaMeanStd(mean::Number, sigma::Number)
     alpha = (mean / sigma) ^ 2
     beta = sigma ^ 2 / mean
 
-    return positive(Gamma(alpha, beta))
+    return Gamma(alpha, beta)
 end
 
 function GammaMeanVariance(mean::Number, variance::Number)
