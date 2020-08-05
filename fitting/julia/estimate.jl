@@ -67,7 +67,7 @@ function learn(data, epimodel, observe, n_samples)
     model = f(data)
     n_adapts = round(Int, n_samples * 0.25)
     sampler = NUTS(n_adapts, 0.45;
-                   max_depth=8)
+                   max_depth=10)
 
     return sample(model, sampler, n_samples + n_adapts;
                   drop_warmup=true,
