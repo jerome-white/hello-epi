@@ -42,8 +42,8 @@ ci=(
 )
 julia_model=seihrd.jl
 
-draws=10000
-samples=`expr $JULIA_NUM_THREADS \* 2000`
+draws=6000
+samples=$(printf "%.0f" $(bc -l <<< "$(nproc) * $draws * 0.3"))
 
 #
 #
