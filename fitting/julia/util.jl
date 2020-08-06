@@ -37,18 +37,29 @@ function solver(model::EpiModel, population::Int, duration::Int;
     u0[3] = initial_infected
     u0[1] = population - sum(u0)
 
+    t0 = 0.0
     saveat = range(lead_time, length=duration)
-    tspan = (0.0, maximum(saveat))
+    tspan = (t0, maximum(saveat))
     compartments = reported(model)
 
     return function (p)
-        prob = ODEProblem(play(population), u0, tspan)
-        sol = solve(prob, Rodas4P();
-                    saveat=saveat, p=p)
+        (start, drift) = p[1:2]
 
-        return sol.retcode == :Success ?
-            transpose(sol[compartments,:]) :
-            nothing
+        noise = GeometricBrownianMotionProcess(0, drift, t0, start)
+        prob = RODEProblem(play(population), u0, tspan;
+                           noise=noise,
+                           rand_prototype=zeros(1))
+        sol = solve(prob, RandomEM();
+                    saveat=saveat,
+                    p=p,
+                    dt=1e-2)
+
+        if sol.retcode == :Success
+            results = view(sol, compartments, :)
+            if all(results .> 0)
+                return transpose(results)
+            end
+        end
     end
 end
 
