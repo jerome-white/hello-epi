@@ -33,16 +33,3 @@ end
 function GammaMeanVariance(mean::Number, variance::Number)
     return GammaMeanStd(mean, sqrt(variance))
 end
-
-#
-#
-#
-function RandomWalk(start::Number, steps::Int, distribution)
-    drift = [ rand(distribution) for i in 1:steps ]
-    return accumulate(+, drift, init=start)
-end
-
-function NormalRandomWalk(start::Number, steps::Int;
-                          mu::Number=0, sig::Number=1)
-    return RandomWalk(start, steps, Normal(mu, sig))
-end
