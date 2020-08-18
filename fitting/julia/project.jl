@@ -1,6 +1,7 @@
 using
     CSV,
     ArgParse,
+    Statistics,
     DataFrames,
     SharedArrays,
     Base.Threads
@@ -28,12 +29,44 @@ function cliargs()
         help = "Population"
         arg_type = Int
 
+        "--resample"
+        help = ""
+        arg_type = Int
+        default = 1
+
         "--lead"
         help = "Lead time"
         arg_type = Int
     end
 
     return parse_args(s)
+end
+
+function estimate(ode, p, observations)
+    (_, _, iterations) = size(observations)
+
+    let i = 1
+        while i <= iterations
+            sol = ode(p)
+            if isnothing(sol)
+                @warn "Unable to find ODE solution"
+                continue
+            end
+            observations[:,:,i] = sol
+            i += 1
+        end
+    end
+
+    return mean(observations, dims=3)
+end
+
+function sampler(days::Int, compartments::Int, iterations::Int)
+    observations = zeros(Float64, days, compartments, iterations)
+
+    return function (ode, parameters)
+        p = convert(Vector, parameters)
+        return estimate(ode, p, observations)
+    end
 end
 
 function main(df, args)
@@ -54,14 +87,18 @@ function main(df, args)
         n + compartments,
     )
     buffer = SharedArray{Float64}(dimensions)
+    buffer[1:end] .= NaN
 
     stop = args["offset"] + days - 1
     index = range(args["offset"], stop=stop)
 
+    pick = sampler(days, compartments, args["resample"])
+
     @threads for i in 1:nrow(df)
         ode = solver(model, args["population"], days;
-                     lead_time=args["lead"])
-        sol = ode(convert(Vector, view(df, i, :)))
+                     lead_time=args["lead"],
+                     dt_order=6)
+        sol = pick(ode, view(df, i, :))
 
         bottom = i * days
         top = bottom - days + 1
@@ -72,6 +109,7 @@ function main(df, args)
     end
 
     projections = DataFrame(buffer)
+    filter!(isfinite ∘ sum, projections)
     rename!(projections, vcat(idxcols, observed(model)))
 
     return projections
