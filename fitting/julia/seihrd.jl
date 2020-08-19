@@ -12,8 +12,11 @@ function build()
     )
 
     parameters = (
-        (:contacts,     positive(GammaMeanStd(40, 20); upper=200)),
-        (:drift,        Uniform(0, 1)),
+        #
+        (:contacts,     GammaMeanStd(40, 20)),
+        (:drift,        Gamma()),
+        (:diffusion,    positive(Normal())),
+        #
         (:transmission, Beta(2, 5)),
         (:fatality,     Beta(0.25, 4)),
         (:incubation,   GammaMeanVariance(5.5, 6.5)),
