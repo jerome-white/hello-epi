@@ -6,8 +6,10 @@ using
     SharedArrays,
     Base.Threads
 
-include("util.jl")
-include("modeler.jl")
+include("epidata.jl")
+include("epimodel.jl")
+include("diffequtils.jl")
+include("modeler.jl") # virtual
 
 function cliargs()
     s = ArgParseSettings()
@@ -42,37 +44,11 @@ function cliargs()
     return parse_args(s)
 end
 
-function estimate(ode, p, observations)
-    (_, _, iterations) = size(observations)
-
-    let i = 1
-        while i <= iterations
-            sol = ode(p)
-            if isnothing(sol)
-                @warn "Unable to find ODE solution"
-                continue
-            end
-            observations[:,:,i] = sol
-            i += 1
-        end
-    end
-
-    return mean(observations, dims=3)
-end
-
-function sampler(days::Int, compartments::Int, iterations::Int)
-    observations = zeros(Float64, days, compartments, iterations)
-
-    return function (ode, parameters)
-        p = convert(Vector, parameters)
-        return estimate(ode, p, observations)
-    end
-end
-
 function main(df, args)
     model = build()
     compartments = nobserved(model)
-    reference = load(args["observations"], model)
+    data = EpiData(args["observations"], model, args["population"];
+                   lead_time=args["lead"])
 
     idxcols = [
         :run,
@@ -92,13 +68,10 @@ function main(df, args)
     stop = args["offset"] + days - 1
     index = range(args["offset"], stop=stop)
 
-    pick = sampler(days, compartments, args["resample"])
-
     @threads for i in 1:nrow(df)
-        ode = solver(model, args["population"], days;
-                     lead_time=args["lead"],
-                     dt_order=6)
-        sol = pick(ode, view(df, i, :))
+        theta = @view df[i,:]
+        prob = mknoise(data, model, theta)
+        sol = prob(DEParams(10, 6))
 
         bottom = i * days
         top = bottom - days + 1

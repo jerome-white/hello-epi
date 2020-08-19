@@ -1,11 +1,15 @@
+# https://turing.ml/dev/tutorials/10-bayesiandiffeq/#including-process-noise-estimation-of-stochastic-differential-equations
+
 using
-    Optim,
+    # Optim,
     Turing,
     ArgParse,
     Distributions
 
-include("util.jl")
-include("modeler.jl")
+include("epidata.jl")
+include("epimodel.jl")
+include("diffequtils.jl")
+include("modeler.jl") # virtual
 
 # disable_logging(Logging.Warn)
 
@@ -17,6 +21,11 @@ function cliargs()
         help = "Number of draws"
         arg_type = Int
         default = 1000
+
+        "--trajectories"
+        help = ""
+        arg_type = Int
+        default = 1
 
         "--population"
         help = "Population"
@@ -34,40 +43,47 @@ function cliargs()
     return parse_args(s)
 end
 
-function learn(data, epimodel, observe, n_samples)
+function learn(epidat::EpiData, epimod::EpiModel, n_samples::Int)
     @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
-        theta = Vector{T}(undef, nparameters(epimodel))
-        for (i, (a, b)) in enumerate(priors(epimodel))
+        theta = Vector{T}(undef, nparameters(epimod))
+        for (i, (a, b)) in enumerate(priors(epimod))
             theta[i] ~ NamedDist(b, a)
         end
 
-        obs = observe(theta)
-        if isnothing(obs)
-            Turing.acclogp!(_varinfo, -Inf)
-            return
-        end
-        compartments = nobserved(epimodel)
+        compartments = nobserved(epimod)
 
         # likelihood priors
         sigma = Vector{T}(undef, compartments)
-        for (i, j) in zip(1:compartments, [1, 2, 2])
-            sigma[i] ~ InverseGamma(j, 1)
+        for (i, (j, k)) in zip(1:compartments, ((3, 0.5), (2, 0.5), (2, 1)))
+            sigma[i] ~ InverseGamma(j, k)
         end
+        # for i in 1:compartments
+        #     sigma[i] ~ InverseGamma(2, 0.5)
+        # end
 
         # likelihood
-        for i in 1:compartments
-            x[:,i] ~ MvNormal(view(obs, :, i), sqrt(sigma[i]))
+        prob = mknoise(epidat, epimod, theta)
+        solution = prob(DEParams(100, 6, 51))
+
+        if isnothing(solution)
+            Turing.acclogp!(_varinfo, -Inf)
+        else
+            sol = convert.(T, solution)
+            for i in 1:compartments
+                y = @view sol[:,i]
+                x[:,i] ~ MvNormal(y, sqrt(sigma[i]))
+            end
+            # for i in 1:first(size(view))
+            #     x[i,:] ~ MvNormal(view(sol, i, :), sqrt.(sigma))
+            # end
         end
-        # for i in 1:first(size(view))
-        #     x[i,:] ~ MvNormal(view(obs, i, :), sqrt.(sigma))
-        # end
     end
 
-    model = f(data)
+    model = f(matrix(epidat))
     n_adapts = round(Int, n_samples * 0.25)
     sampler = NUTS(n_adapts, 0.45;
-                   max_depth=10)
+                   max_depth=6)
 
     return sample(model, sampler, n_samples + n_adapts;
                   drop_warmup=true,
@@ -75,12 +91,10 @@ function learn(data, epimodel, observe, n_samples)
 end
 
 function main(args, fp)
-    epimodel = build()
-    df = load(read(fp), epimodel)
-    ode = solver(epimodel, args["population"], df;
-                 lead_time=args["lead"])
-    data = Matrix{Float64}(df)
-    chains = learn(data, epimodel, ode, args["draws"])
+    epimod = build()
+    epidat = EpiData(read(fp), epimod, args["population"];
+                     lead_time=args["lead"])
+    chains = learn(epidat, epimod, args["draws"])
     write(args["trace"], chains)
 end
 
