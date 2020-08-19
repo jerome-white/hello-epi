@@ -30,9 +30,10 @@ end
 function play(N::Int)
     return function (du, u, p, t, W)
         (S, E, I, H, _, _) = u
-        (alpha, gamma, mu) = ./(1, p[end-2:end])
+        (trx, cfr) = p[4:5]
+        (alpha, gamma, mu) = 1 ./ p[end-2:end]
 
-        beta = W[1] * p[3]
+        beta = W[1] * trx
 
         dS =  beta * S * I / N
         dE = alpha * E
@@ -43,7 +44,7 @@ function play(N::Int)
         du[2] = dS - dE
         du[3] = dE - dI
         du[4] = dI - dH
-        du[5] = (1 - p[4]) * dH
-        du[6] =      p[4]  * dH
+        du[5] = dH * (1 - cfr)
+        du[6] = dH * cfr
     end
 end
