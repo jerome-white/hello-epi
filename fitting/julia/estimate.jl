@@ -93,7 +93,7 @@ end
 function main(args, fp)
     epimod = build()
     epidat = EpiData(read(fp), epimod, args["population"];
-                     lead_time=args["lead"])
+                     past=args["lead"])
     chains = learn(epidat, epimod, args["draws"])
     write(args["trace"], chains)
 end
