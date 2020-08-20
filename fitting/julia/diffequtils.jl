@@ -9,22 +9,11 @@ include("modeler.jl")  # virtual package
 #
 #
 #
-function agg(values::Array{T,3}, f) where T <: Real
-    return dropdims(f(values; dims=3); dims=3)
-end
-
-function average(values::Array{T,3}) where T <: Real
-    return agg(values, mean)
-end
-
-#
-#
-#
 struct DEParams
     iterations::Int
     dt_order::Int
     limit::Real
-    aggregate
+    acc
 end
 
 function DEParams(iterations::Int, dt_order::Int, limit::Real)
@@ -32,6 +21,23 @@ function DEParams(iterations::Int, dt_order::Int, limit::Real)
 end
 DEParams(iterations::Int, dt_order::Int) = DEParams(iterations, dt_order, Inf)
 DEParams() = DEParams(1, 0)
+
+tsteps(params::DEParams) = 1 / 2 ^ params.dt_order
+
+#
+#
+#
+function accrue(values::Array{T,3}, f) where T <: Real
+    return dropdims(f(values; dims=3); dims=3)
+end
+
+function accrue(params::DEParams, values::Array{T,3}) where T <: Real
+    return params.acc(values)
+end
+
+function average(values::Array{T,3}) where T <: Real
+    return accrue(values, mean)
+end
 
 #
 #
@@ -59,12 +65,12 @@ function integrate(data::EpiData,
     solutions = zeros(Real, rows, columns, de_params.iterations)
 
     saveat = duration(data)
-    dt = 1 / 2 ^ de_params.dt_order
+    dt = tsteps(de_params)
     # p = convert(Vector, parameters)
 
     compartments = reported(model)
 
-    let success = 1,
+    let success = 0,
         failure = 0
         while failure < de_params.limit
             sol = solve(de_prob, RandomEM();
@@ -74,10 +80,10 @@ function integrate(data::EpiData,
             if sol.retcode == :Success
                 results = @view sol[compartments,:]
                 if all(results .>= 0)
-                    solutions[:,:,success] = transpose(results)
                     success += 1
-                    if success > de_params.iterations
-                        return de_params.aggregate(solutions)
+                    solutions[:,:,success] = transpose(results)
+                    if success == de_params.iterations
+                        return accrue(de_params, solutions)
                     end
                     continue
                 end
