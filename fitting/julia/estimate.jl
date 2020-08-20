@@ -71,8 +71,8 @@ function learn(epidat::EpiData, epimod::EpiModel, n_samples::Int)
         else
             sol = convert.(T, solution)
             for i in 1:compartments
-                y = @view sol[:,i]
-                x[:,i] ~ MvNormal(y, sqrt(sigma[i]))
+                mu = @view sol[:,i]
+                x[:,i] ~ MvNormal(mu, sqrt(sigma[i]))
             end
             # for i in 1:first(size(view))
             #     x[i,:] ~ MvNormal(view(sol, i, :), sqrt.(sigma))
