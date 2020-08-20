@@ -60,11 +60,11 @@ function integrate(data::EpiData,
                    parameters,
                    de_prob,
                    de_params::DEParams)
-    rows = days(data)
+    rows = active(data)
     columns = nobserved(model)
     solutions = zeros(Real, rows, columns, de_params.iterations)
 
-    saveat = duration(data)
+    saveat = eachday(data)
     dt = tsteps(de_params)
     # p = convert(Vector, parameters)
 
