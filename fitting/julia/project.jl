@@ -31,48 +31,53 @@ function cliargs()
         help = "Population"
         arg_type = Int
 
-        "--resample"
-        help = ""
-        arg_type = Int
-        default = 1
-
         "--lead"
         help = "Lead time"
         arg_type = Int
+
+        "--trajectories"
+        help = ""
+        arg_type = Int
+        default = 1
     end
 
     return parse_args(s)
 end
 
-function main(df, args)
-    model = build()
-    compartments = nobserved(model)
-    data = EpiData(args["observations"], model, args["population"];
-                   lead_time=args["lead"])
+df = CSV.File(read(stdin)) |> DataFrame!
+args = cliargs()
 
-    idxcols = [
-        :run,
-        :day,
-    ]
-    n = length(idxcols)
-    left = n + 1
+model = build()
+buckets = nobserved(model)
+data = EpiData(args["observations"], model, args["population"];
+               past=args["lead"],
+               future=args["forward"])
 
-    days = nrow(reference) + args["forward"]
-    dimensions = (
-        nrow(df) * days,
-        n + compartments,
-    )
-    buffer = SharedArray{Float64}(dimensions)
-    buffer[1:end] .= NaN
+idxcols = [
+    :run,
+    :day,
+]
+n = length(idxcols)
+left = n + 1
 
-    stop = args["offset"] + days - 1
-    index = range(args["offset"], stop=stop)
+days = active(data)
+dimensions = (
+    nrow(df) * days,
+    n + buckets,
+)
+buffer = SharedArray{Float64}(dimensions)
+buffer[1:end] .= NaN
 
-    @threads for i in 1:nrow(df)
-        theta = @view df[i,:]
-        prob = mknoise(data, model, theta)
-        sol = prob(DEParams(10, 6))
+stop = args["offset"] + days - 1
+index = range(args["offset"], stop=stop)
 
+dep = DEParams(args["trajectories"], 6)
+
+@threads for i in 1:nrow(df)
+    theta = Vector(view(df, i, :))
+    prob = mknoise(data, model, theta)
+    sol = prob(dep)
+    if !isnothing(sol)
         bottom = i * days
         top = bottom - days + 1
 
@@ -80,12 +85,9 @@ function main(df, args)
         buffer[top:bottom,1:n] = hcat(order, index)
         buffer[top:bottom,left:end] = sol
     end
-
-    projections = DataFrame(buffer)
-    filter!(isfinite ∘ sum, projections)
-    rename!(projections, vcat(idxcols, observed(model)))
-
-    return projections
 end
 
-CSV.write(stdout, main(DataFrame!(CSV.File(read(stdin))), cliargs()))
+projections = DataFrame(buffer)
+filter!(isfinite ∘ sum, projections)
+rename!(projections, vcat(idxcols, observed(model)))
+CSV.write(stdout, projections)
