@@ -7,20 +7,27 @@ include("epimodel.jl")
 struct EpiData
     df::DataFrame
     population::Int
-    lead_time::Int
+    past::Int
+    future::Int
 end
 
 function EpiData(file, model::EpiModel, population::Int;
-                 lead_time::Int=1)
+                 past::Int=1,
+                 future::Int=0)
     df = CSV.File(file) |> DataFrame!
     df = select(sort(df, [:date]), observed(model);
                 copycols=false)
 
-    return EpiData(df, population, lead_time)
+    return EpiData(df, population, past, future)
 end
 
 population(data::EpiData) = data.population
-days(data::EpiData) = nrow(data.df)
-duration(data::EpiData) = range(data.lead_time, length=days(data))
-startstop(data::EpiData) = (0.0, maximum(duration(data)))
+
+past(data::EpiData) = data.past
+present(data::EpiData) = nrow(data.df)
+future(data::EpiData) = data.future
+active(data::EpiData) = present(data) + future(data)
+startstop(data::EpiData) = (0.0, past(data) + active(data))
+eachday(data::EpiData) = range(past(data), length=active(data))
+
 matrix(data::EpiData) = Matrix{Float64}(data.df)
