@@ -1,5 +1,5 @@
 using
-    MCMCChains,
+    MCMCChains
 
 function catchains(dir::String)
     chains = Vector{Chains}()
