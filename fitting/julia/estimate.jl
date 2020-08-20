@@ -64,7 +64,7 @@ function learn(epidat::EpiData, epimod::EpiModel, n_samples::Int)
 
         # likelihood
         prob = mknoise(epidat, epimod, theta)
-        solution = prob(DEParams(100, 6, 51))
+        solution = prob(DEParams(10, 6, 1))
 
         if isnothing(solution)
             Turing.acclogp!(_varinfo, -Inf)
