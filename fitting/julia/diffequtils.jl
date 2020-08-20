@@ -66,7 +66,6 @@ function integrate(data::EpiData,
 
     saveat = eachday(data)
     dt = tsteps(de_params)
-    # p = convert(Vector, parameters)
 
     compartments = reported(model)
 
