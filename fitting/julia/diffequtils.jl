@@ -96,7 +96,7 @@ end
 function mknoise(data::EpiData, model::EpiModel, parameters)
     (start, drift, diffusion) = parameters
 
-    tspan = span(data)
+    tspan = startstop(data)
     t0 = minimum(tspan)
     noise = GeometricBrownianMotionProcess(drift, diffusion, t0, start)
 

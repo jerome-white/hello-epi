@@ -22,5 +22,5 @@ end
 population(data::EpiData) = data.population
 days(data::EpiData) = nrow(data.df)
 duration(data::EpiData) = range(data.lead_time, length=days(data))
-span(data::EpiData) = (0.0, maximum(duration(data)))
+startstop(data::EpiData) = (0.0, maximum(duration(data)))
 matrix(data::EpiData) = Matrix{Float64}(data.df)
