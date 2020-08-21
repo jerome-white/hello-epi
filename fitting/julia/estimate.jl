@@ -93,13 +93,10 @@ function learn(epidat::EpiData,
                   progress=false)
 end
 
-function main(args, fp)
-    epimod = build()
-    epidat = EpiData(read(fp), epimod, args["population"];
-                     past=args["lead"])
-    dep = DEParams(args["trajectories"], 6, 1)
-    chains = learn(epidat, epimod, dep, args["draws"])
-    write(args["trace"], chains)
-end
-
-main(cliargs(), stdin)
+args = cliargs()
+epimod = build()
+epidat = EpiData(read(stdin), epimod, args["population"];
+                 past=args["lead"])
+dep = DEParams(args["trajectories"], 6, 1)
+chains = learn(epidat, epimod, dep, args["draws"])
+write(args["trace"], chains)
