@@ -43,7 +43,10 @@ function cliargs()
     return parse_args(s)
 end
 
-function learn(epidat::EpiData, epimod::EpiModel, n_samples::Int)
+function learn(epidat::EpiData,
+               epimod::EpiModel,
+               dep::DEParams,
+               n_samples::Int)
     @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
         theta = Vector{T}(undef, nparameters(epimod))
@@ -64,7 +67,7 @@ function learn(epidat::EpiData, epimod::EpiModel, n_samples::Int)
 
         # likelihood
         prob = mknoise(epidat, epimod, theta)
-        solution = prob(DEParams(10, 6, 1))
+        solution = prob(dep)
 
         if isnothing(solution)
             Turing.acclogp!(_varinfo, -Inf)
@@ -94,7 +97,8 @@ function main(args, fp)
     epimod = build()
     epidat = EpiData(read(fp), epimod, args["population"];
                      past=args["lead"])
-    chains = learn(epidat, epimod, args["draws"])
+    dep = DEParams(args["trajectories"], 6, 1)
+    chains = learn(epidat, epimod, dep, args["draws"])
     write(args["trace"], chains)
 end
 
