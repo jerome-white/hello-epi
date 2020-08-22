@@ -8,6 +8,7 @@ OUTPUT=$RESULTS/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
 export PYTHONLOGLEVEL=debug
 export PYTHONPATH=$ROOT
 export JULIA_NUM_THREADS=`nproc`
+export JULIA_DEBUG=all
 
 JULIA_VIRTUAL_MODEL=modeler.jl
 
