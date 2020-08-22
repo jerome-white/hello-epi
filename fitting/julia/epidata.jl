@@ -27,7 +27,7 @@ past(data::EpiData) = data.past
 present(data::EpiData) = nrow(data.df)
 future(data::EpiData) = data.future
 active(data::EpiData) = present(data) + future(data)
-startstop(data::EpiData) = (0.0, past(data) + active(data))
 eachday(data::EpiData) = range(past(data), length=active(data))
+startstop(data::EpiData) = (0.0, maximum(eachday(data)))
 
 matrix(data::EpiData) = Matrix{Float64}(data.df)
