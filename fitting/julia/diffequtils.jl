@@ -27,16 +27,16 @@ tsteps(params::DEParams) = 1 / 2 ^ params.dt_order
 #
 #
 #
-function accrue(values::Array{T,3}, f) where T <: Real
+function accrue(f, values::AbstractArray{T,3}) where T <: Real
     return dropdims(f(values; dims=3); dims=3)
 end
 
-function accrue(params::DEParams, values::Array{T,3}) where T <: Real
+function accrue(params::DEParams, values::AbstractArray{T,3}) where T <: Real
     return params.acc(values)
 end
 
-function average(values::Array{T,3}) where T <: Real
-    return accrue(values, mean)
+function average(values::AbstractArray{T,3}) where T <: Real
+    return accrue(mean, values)
 end
 
 #
