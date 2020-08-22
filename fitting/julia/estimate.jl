@@ -97,6 +97,7 @@ args = cliargs()
 epimod = build()
 epidat = EpiData(read(stdin), epimod, args["population"];
                  past=args["lead"])
-dep = DEParams(args["trajectories"], 6, 1)
+upper = args["trajectories"] + 1
+dep = DEParams(args["trajectories"], 6, upper)
 chains = learn(epidat, epimod, dep, args["draws"])
 write(args["trace"], chains)
