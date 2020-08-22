@@ -138,7 +138,12 @@ julia estimate.jl \
       < $OUTPUT/training.csv \
       &> ${log}.log
 EOF
-done | parallel --will-cite --delay 5.2
+done | parallel \
+           --will-cite \
+           --delay 5.2 \
+           --joblog $OUTPUT/estimate.log
+python $ROOT/scripts/exit-okay.py < $OUTPUT/estimate.log \
+    || exit 1
 
 #
 #
