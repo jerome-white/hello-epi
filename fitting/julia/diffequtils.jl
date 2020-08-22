@@ -81,8 +81,9 @@ function integrate(data::EpiData,
                 if all(results .>= 0)
                     success += 1
                     solutions[:,:,success] = transpose(results)
-                    if success == de_params.iterations
-                        return accrue(de_params, solutions)
+                    if success >= de_params.iterations
+                        relevant = @view solutions[:,:,1:success]
+                        return accrue(de_params, relevant)
                     end
                     continue
                 end
