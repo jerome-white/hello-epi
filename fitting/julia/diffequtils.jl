@@ -67,16 +67,17 @@ function integrate(data::EpiData,
                    de_params::DEParams)
     rows = active(data)
     columns = nobserved(model)
-    solutions = zeros(Real, rows, columns, de_params.iterations)
+    iterations = trajectories(de_params)
+    solutions = zeros(Real, rows, columns, iterations)
 
-    saveat = eachday(data)
     dt = tsteps(de_params)
-
+    limit = attempts(de_params)
+    saveat = eachday(data)
     compartments = reported(model)
 
     let success = 0,
         failure = 0
-        while failure < de_params.limit
+        while success < iterations && failure < limit
             sol = solve(de_prob, RandomEM();
                         saveat=saveat,
                         p=parameters,
@@ -86,14 +87,15 @@ function integrate(data::EpiData,
                 if all(results .>= 0)
                     success += 1
                     solutions[:,:,success] = transpose(results)
-                    if success >= de_params.iterations
-                        relevant = @view solutions[:,:,1:success]
-                        return accrue(de_params, relevant)
-                    end
                     continue
                 end
             end
             failure += 1
+        end
+
+        if success > 0
+            relevant = @view solutions[:,:,1:success]
+            return accrue(de_params, relevant)
         end
     end
 end
