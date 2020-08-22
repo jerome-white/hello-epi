@@ -31,7 +31,9 @@ end
 function DEParams(iterations::Int, dt_order::Int, limit::Real)
     return DEParams(iterations, dt_order, limit, average)
 end
-DEParams(iterations::Int, dt_order::Int) = DEParams(iterations, dt_order, Inf)
+function DEParams(iterations::Int, dt_order::Int)
+    return DEParams(iterations, dt_order, iterations)
+end
 DEParams() = DEParams(1, 0)
 
 tsteps(params::DEParams) = 1 / 2 ^ params.dt_order
