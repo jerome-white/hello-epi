@@ -121,11 +121,12 @@ chains=$OUTPUT/chains
 for i in $logs $chains; do
     mkdir $i
 done
+suffix="--suffix=.cls"
 
 echo "[ `date` RESULTS ] Estimate"
 for i in $(seq $(nproc)); do
-    trace=`mktemp --tmpdir=$chains XXX`
-    log=$logs/`basename $trace`
+    trace=`mktemp --tmpdir=$chains $suffix XXX`
+    log=$logs/`basename $suffix $trace`
 
     cat <<EOF
 julia estimate.jl \
