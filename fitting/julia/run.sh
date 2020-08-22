@@ -45,6 +45,7 @@ julia_model=seihrd.jl
 
 draws=6000
 samples=$(printf "%.0f" $(bc -l <<< "$(nproc) * $draws * 0.3"))
+resamples=10
 
 #
 #
@@ -132,6 +133,7 @@ julia estimate.jl \
       --draws $draws \
       --population $population \
       --lead $lead_time \
+      --trajectories $resamples \
       < $OUTPUT/training.csv \
       &> ${log}.log
 EOF
@@ -160,6 +162,7 @@ julia project.jl \
       --offset $offset \
       --forward $testing_days \
       --lead $lead_time \
+      --trajectories $resamples \
       --observations $OUTPUT/training.csv \
       < $OUTPUT/params.csv \
       > $OUTPUT/projection.csv
