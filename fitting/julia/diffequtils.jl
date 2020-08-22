@@ -9,6 +9,18 @@ include("modeler.jl")  # virtual package
 #
 #
 #
+function accrue(f, values::AbstractArray{T,3}) where T <: Real
+    return dropdims(f(values; dims=3); dims=3)
+end
+
+function average(values::AbstractArray{T,3}) where T <: Real
+    return accrue(mean, values)
+end
+
+
+#
+#
+#
 struct DEParams
     iterations::Int
     dt_order::Int
@@ -23,20 +35,11 @@ DEParams(iterations::Int, dt_order::Int) = DEParams(iterations, dt_order, Inf)
 DEParams() = DEParams(1, 0)
 
 tsteps(params::DEParams) = 1 / 2 ^ params.dt_order
-
-#
-#
-#
-function accrue(f, values::AbstractArray{T,3}) where T <: Real
-    return dropdims(f(values; dims=3); dims=3)
-end
+attempts(params::DEParams) = params.limit
+trajectories(params::DEParams) = params.iterations
 
 function accrue(params::DEParams, values::AbstractArray{T,3}) where T <: Real
     return params.acc(values)
-end
-
-function average(values::AbstractArray{T,3}) where T <: Real
-    return accrue(mean, values)
 end
 
 #
