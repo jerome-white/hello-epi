@@ -53,6 +53,21 @@ function accrue(params::NoiseParams, values::AbstractArray{T,3})
     return params.acc(values)
 end
 
+struct DEConditions
+    u0
+    ode
+    tspan
+    saveat
+end
+
+function DEConditions(model::EpiModel,
+                      data::EpiData)
+    return DEConditions(initial(data, model),
+                        play(population(data)),
+                        startstop(data),
+                        eachday(data))
+end
+
 #
 #
 #
@@ -73,29 +88,62 @@ function integrate(model::EpiModel,
                    data::EpiData,
                    parameters::AbstractDEParams,
                    theta)
-    rows = active(data)
-    columns = nobserved(model)
+    sol = answer(model, data, parameters, theta)
+    if !isnothing(sol)
+        return transpose(sol)
+    end
+end
+
+function answer(model::EpiModel,
+                data::EpiData,
+                parameters::StandardDEParams,
+                theta)
+    cond = DEConditions(model, data)
+    prob = ODEProblem(cond.ode, cond.u0, cond.tspan)
+    sol = solve(prob, Rodas4P();
+                saveat=cond.saveat,
+                p=theta)
+
+    if sol.retcode == :Success
+        compartments = reported(model)
+        return sol[compartments,:]
+    end
+end
+
+function answer(model::EpiModel,
+                data::EpiData,
+                parameters::NoiseDEParams,
+                theta)
+    rows = nobserved(model)
+    columns = active(data)
     iterations = trajectories(parameters)
     solutions = zeros(Real, rows, columns, iterations)
 
     limit = attempts(parameters)
     compartments = reported(model)
 
-    u0 = initial(data, model)
-    ode = play(population(data))
-    tspan = startstop(data)
-    saveat = eachday(data)
-    prob = problem(parameters, ode, u0, tspan, theta)
+    t0 = minimum(tspan)
+    cond = DEConditions(model, data)
+    (start, drift, diffusion) = theta
+    noise = GeometricBrownianMotionProcess(drift, diffusion, t0, start)
+    prob = RODEProblem(cond.ode, cond.u0, cond.tspan;
+                       noise=noise,
+                       rand_prototype=zeros(1))
+
+    dt = tsteps(parameters)
 
     let success = 0,
         failure = 0
         while success < iterations && failure < limit
-            sol = solution(parameters, prob, saveat, theta)
+            sol = solve(prob, RandomEM();
+                        saveat=saveat,
+                        p=theta,
+                        dt=dt)
             if sol.retcode == :Success
                 results = @view sol[compartments,:]
                 if all(results .>= 0)
                     success += 1
-                    solutions[:,:,success] = transpose(results)
+                    solutions[:,:,success] = results
                     continue
                 end
             end
@@ -104,36 +152,7 @@ function integrate(model::EpiModel,
 
         if success > 0
             relevant = @view solutions[:,:,1:success]
-            return success > 1 ? accrue(parameters, relevant) : relevant
+            return accrue(parameters, relevant)
         end
     end
-end
-
-function problem(parameters::StandardParams, ode, u0, tspan, theta)
-    return ODEProblem(ode, u0, tspan)
-end
-
-function problem(parameters::NoiseParams, ode, u0, tspan, theta)
-    t0 = minimum(tspan)
-    (start, drift, diffusion) = theta
-    noise = GeometricBrownianMotionProcess(drift, diffusion, t0, start)
-
-    return RODEProblem(ode, u0, tspan;
-                       noise=noise,
-                       rand_prototype=zeros(1))
-end
-
-function solution(parameters::StandardParams, prob, saveat, theta)
-    return solve(prob, Rodas4P();
-                 saveat=saveat,
-                 p=theta)
-end
-
-function solution(parameters::NoiseParams, prob, saveat, theta)
-    dt = tsteps(parameters)
-
-    return solve(prob, RandomEM();
-                 saveat=saveat,
-                 p=theta,
-                 dt=dt)
 end
