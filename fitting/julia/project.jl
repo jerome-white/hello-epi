@@ -1,12 +1,15 @@
 using
     CSV,
     ArgParse,
+    Statistics,
     DataFrames,
     SharedArrays,
     Base.Threads
 
-include("util.jl")
-include("modeler.jl")
+include("epidata.jl")
+include("epimodel.jl")
+include("diffequtils.jl")
+include("modeler.jl") # virtual
 
 function cliargs()
     s = ArgParseSettings()
@@ -31,38 +34,50 @@ function cliargs()
         "--lead"
         help = "Lead time"
         arg_type = Int
+
+        "--trajectories"
+        help = ""
+        arg_type = Int
+        default = 1
     end
 
     return parse_args(s)
 end
 
-function main(df, args)
-    model = build()
-    compartments = nobserved(model)
-    reference = load(args["observations"], model)
+df = CSV.File(read(stdin)) |> DataFrame!
+args = cliargs()
 
-    idxcols = [
-        :run,
-        :day,
-    ]
-    n = length(idxcols)
-    left = n + 1
+model = build()
+buckets = nobserved(model)
+data = EpiData(args["observations"], model, args["population"];
+               past=args["lead"],
+               future=args["forward"])
 
-    days = nrow(reference) + args["forward"]
-    dimensions = (
-        nrow(df) * days,
-        n + compartments,
-    )
-    buffer = SharedArray{Float64}(dimensions)
+idxcols = [
+    :run,
+    :day,
+]
+n = length(idxcols)
+left = n + 1
 
-    stop = args["offset"] + days - 1
-    index = range(args["offset"], stop=stop)
+days = active(data)
+dimensions = (
+    nrow(df) * days,
+    n + buckets,
+)
+buffer = SharedArray{Float64}(dimensions)
+buffer[1:end] .= NaN
 
-    @threads for i in 1:nrow(df)
-        ode = solver(model, args["population"], days;
-                     lead_time=args["lead"])
-        sol = ode(convert(Vector, view(df, i, :)))
+stop = args["offset"] + days - 1
+index = range(args["offset"], stop=stop)
 
+dep = DEParams(args["trajectories"], 5, Inf)
+
+@threads for i in 1:nrow(df)
+    theta = Vector(view(df, i, :))
+    prob = mknoise(data, model, theta)
+    sol = prob(dep)
+    if !isnothing(sol)
         bottom = i * days
         top = bottom - days + 1
 
@@ -70,11 +85,9 @@ function main(df, args)
         buffer[top:bottom,1:n] = hcat(order, index)
         buffer[top:bottom,left:end] = sol
     end
-
-    projections = DataFrame(buffer)
-    rename!(projections, vcat(idxcols, observed(model)))
-
-    return projections
 end
 
-CSV.write(stdout, main(DataFrame!(CSV.File(read(stdin))), cliargs()))
+projections = DataFrame(buffer)
+filter!(isfinite ∘ sum, projections)
+rename!(projections, vcat(idxcols, observed(model)))
+CSV.write(stdout, projections)

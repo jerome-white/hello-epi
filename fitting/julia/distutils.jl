@@ -8,8 +8,8 @@ struct IQR
     upper::Number
 end
 
-span(iqr::IQR) = iqr.upper - iqr.lower
-scale(iqr::IQR) = span(iqr) / 2
+width(iqr::IQR) = iqr.upper - iqr.lower
+scale(iqr::IQR) = width(iqr) / 2
 center(iqr::IQR) = iqr.upper - scale(iqr)
 
 #

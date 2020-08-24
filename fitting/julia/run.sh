@@ -8,6 +8,7 @@ OUTPUT=$RESULTS/`TZ=Asia/Kolkata date +%j-%d%b-%H%M | tr [:lower:] [:upper:]`
 export PYTHONLOGLEVEL=debug
 export PYTHONPATH=$ROOT
 export JULIA_NUM_THREADS=`nproc`
+export JULIA_DEBUG=all
 
 JULIA_VIRTUAL_MODEL=modeler.jl
 
@@ -44,6 +45,7 @@ julia_model=seihrd.jl
 
 draws=6000
 samples=$(printf "%.0f" $(bc -l <<< "$(nproc) * $draws * 0.3"))
+resamples=10
 
 #
 #
@@ -119,11 +121,12 @@ chains=$OUTPUT/chains
 for i in $logs $chains; do
     mkdir $i
 done
+suffix="--suffix=.cls"
 
 echo "[ `date` RESULTS ] Estimate"
 for i in $(seq $(nproc)); do
-    trace=`mktemp --tmpdir=$chains XXX`
-    log=$logs/`basename $trace`
+    trace=`mktemp --tmpdir=$chains $suffix XXX`
+    log=$logs/`basename $suffix $trace`
 
     cat <<EOF
 julia estimate.jl \
@@ -131,10 +134,16 @@ julia estimate.jl \
       --draws $draws \
       --population $population \
       --lead $lead_time \
+      --trajectories $resamples \
       < $OUTPUT/training.csv \
       &> ${log}.log
 EOF
-done | parallel --will-cite --delay 5.2
+done | parallel \
+           --will-cite \
+           --delay 5.2 \
+           --joblog $OUTPUT/estimate.log
+python $ROOT/scripts/exit-okay.py < $OUTPUT/estimate.log \
+    || exit 1
 
 #
 #
@@ -159,6 +168,7 @@ julia project.jl \
       --offset $offset \
       --forward $testing_days \
       --lead $lead_time \
+      --trajectories $resamples \
       --observations $OUTPUT/training.csv \
       < $OUTPUT/params.csv \
       > $OUTPUT/projection.csv
