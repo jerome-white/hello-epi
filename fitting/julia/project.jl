@@ -71,7 +71,7 @@ buffer[1:end] .= NaN
 stop = args["offset"] + days - 1
 index = range(args["offset"], stop=stop)
 
-dep = DEParams(args["trajectories"], 6, Inf)
+dep = DEParams(args["trajectories"], 5, Inf)
 
 @threads for i in 1:nrow(df)
     theta = Vector(view(df, i, :))
