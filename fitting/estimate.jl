@@ -55,12 +55,9 @@ function learn(epidat::EpiData,
 
         # likelihood priors
         sigma = Vector{T}(undef, compartments)
-        for (i, (j, k)) in zip(1:compartments, ((3, 0.5), (2, 0.5), (2, 1)))
-            sigma[i] ~ InverseGamma(j, k)
+        for i in 1:compartments
+            sigma[i] ~ InverseGamma(2, 3)
         end
-        # for i in 1:compartments
-        #     sigma[i] ~ InverseGamma(2, 0.5)
-        # end
 
         # likelihood
         prob = mknoise(epidat, epimod, theta)
