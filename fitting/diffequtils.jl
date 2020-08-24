@@ -21,26 +21,35 @@ end
 #
 #
 #
-struct DEParams
+abstract type AbstractDEParams end
+struct StandardParams <: AbstractDEParams end
+struct NoiseParams <: AbstractDEParams
     iterations::Int
     dt_order::Int
     limit::Real
     acc
 end
 
-function DEParams(iterations::Int, dt_order::Int, limit::Real)
-    return DEParams(iterations, dt_order, limit, average)
-end
-function DEParams(iterations::Int, dt_order::Int)
-    return DEParams(iterations, dt_order, iterations)
-end
-DEParams() = DEParams(1, 0)
+StandardParams() = StandardParams(1)
 
-tsteps(params::DEParams) = 1 / 2 ^ params.dt_order
-attempts(params::DEParams) = params.limit
-trajectories(params::DEParams) = params.iterations
+function NoiseParams(iterations::Int, dt_order::Int, limit::Real)
+    return NoiseParams(iterations, dt_order, limit, average)
+end
+function NoiseParams(iterations::Int, dt_order::Int)
+    return NoiseParams(iterations, dt_order, iterations)
+end
+NoiseParams() = NoiseParams(1, 0)
 
-function accrue(params::DEParams, values::AbstractArray{T,3}) where T <: Real
+tsteps(params::NoiseParams) = 1 / 2 ^ params.dt_order
+
+attempts(params::AbstractDEParams) = 1
+attempts(params::NoiseParams) = params.limit
+
+trajectories(params::AbstractDEParams) = 1
+trajectories(params::NoiseParams) = params.iterations
+
+function accrue(params::NoiseParams, values::AbstractArray{T,3})
+    where T <: Real
     return params.acc(values)
 end
 
