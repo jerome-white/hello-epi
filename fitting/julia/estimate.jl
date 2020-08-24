@@ -1,5 +1,3 @@
-# https://turing.ml/dev/tutorials/10-bayesiandiffeq/#including-process-noise-estimation-of-stochastic-differential-equations
-
 using
     # Optim,
     Turing,
