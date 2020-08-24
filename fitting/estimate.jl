@@ -42,7 +42,7 @@ end
 
 function learn(epidat::EpiData,
                epimod::EpiModel,
-               dep::DEParams,
+               dep::AbstractDEParams,
                n_samples::Int)
     @model f(x, ::Type{T} = Float64) where {T} = begin
         # priors
@@ -60,13 +60,12 @@ function learn(epidat::EpiData,
         end
 
         # likelihood
-        prob = mknoise(epidat, epimod, theta)
-        solution = prob(dep)
+        observed = integrate(epidat, epimod, dep, theta)
 
-        if isnothing(solution)
+        if isnothing(observed)
             Turing.acclogp!(_varinfo, -Inf)
         else
-            sol = convert.(T, solution)
+            sol = convert.(T, observed)
             for i in 1:compartments
                 mu = @view sol[:,i]
                 x[:,i] ~ MvNormal(mu, sqrt(sigma[i]))
@@ -92,6 +91,7 @@ epimod = build()
 epidat = EpiData(read(stdin), epimod, args["population"];
                  past=args["lead"])
 upper = args["trajectories"] + 1
-dep = DEParams(args["trajectories"], 5)
+# dep = NoiseParams(args["trajectories"], 5)
+dep = StandardParams()
 chains = learn(epidat, epimod, dep, args["draws"])
 write(args["trace"], chains)
