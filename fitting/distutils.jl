@@ -20,7 +20,7 @@ function positive(dist; lower::Number=0, upper::Number=Inf)
 end
 
 function CauchyIQR(iqr::IQR)
-    return positive(Cauchy(center(iqr), scale(iqr)))
+    return Cauchy(center(iqr), scale(iqr))
 end
 
 function GammaMeanStd(mean::Number, sigma::Number)
