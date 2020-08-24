@@ -69,28 +69,28 @@ function initial(data::EpiData, model::EpiModel;
     return u0
 end
 
-function integrate(data::EpiData,
-                   model::EpiModel,
-                   parameters,
-                   de_prob,
-                   de_params::DEParams)
+function integrate(model::EpiModel,
+                   data::EpiData,
+                   parameters::AbstractDEParams,
+                   theta)
     rows = active(data)
     columns = nobserved(model)
-    iterations = trajectories(de_params)
+    iterations = trajectories(parameters)
     solutions = zeros(Real, rows, columns, iterations)
 
-    dt = tsteps(de_params)
-    limit = attempts(de_params)
-    saveat = eachday(data)
+    limit = attempts(parameters)
     compartments = reported(model)
+
+    u0 = initial(data, model)
+    ode = play(population(data))
+    tspan = startstop(data)
+    saveat = eachday(data)
+    prob = problem(parameters, ode, u0, tspan, theta)
 
     let success = 0,
         failure = 0
         while success < iterations && failure < limit
-            sol = solve(de_prob, RandomEM();
-                        saveat=saveat,
-                        p=parameters,
-                        dt=dt)
+            sol = solution(parameters, prob, saveat, theta)
             if sol.retcode == :Success
                 results = @view sol[compartments,:]
                 if all(results .>= 0)
@@ -104,26 +104,36 @@ function integrate(data::EpiData,
 
         if success > 0
             relevant = @view solutions[:,:,1:success]
-            return accrue(de_params, relevant)
+            return success > 1 ? accrue(parameters, relevant) : relevant
         end
     end
 end
 
-function mknoise(data::EpiData, model::EpiModel, parameters)
-    (start, drift, diffusion) = parameters
+function problem(parameters::StandardParams, ode, u0, tspan, theta)
+    return ODEProblem(ode, u0, tspan)
+end
 
-    tspan = startstop(data)
+function problem(parameters::NoiseParams, ode, u0, tspan, theta)
     t0 = minimum(tspan)
+    (start, drift, diffusion) = theta
     noise = GeometricBrownianMotionProcess(drift, diffusion, t0, start)
 
-    u0 = initial(data, model)
-    ode = play(population(data))
-
-    prob = RODEProblem(ode, u0, tspan;
+    return RODEProblem(ode, u0, tspan;
                        noise=noise,
                        rand_prototype=zeros(1))
+end
 
-    return function (dep::DEParams)
-        return integrate(data, model, parameters, prob, dep)
-    end
+function solution(parameters::StandardParams, prob, saveat, theta)
+    return solve(prob, Rodas4P();
+                 saveat=saveat,
+                 p=theta)
+end
+
+function solution(parameters::NoiseParams, prob, saveat, theta)
+    dt = tsteps(parameters)
+
+    return solve(prob, RandomEM();
+                 saveat=saveat,
+                 p=theta,
+                 dt=dt)
 end
