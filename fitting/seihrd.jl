@@ -16,7 +16,7 @@ function build()
         (:transmission, Beta(2, 5)),
         (:fatality,     Beta(0.25, 4)),
         (:incubation,   GammaMeanVariance(5.5, 6.5)),
-        (:infectious,   positive(CauchyIQR(IQR(5.7, 8.5))),
+        (:infectious,   positive(CauchyIQR(IQR(5.7, 8.5)))),
         (:recovery,     GammaMeanVariance(9.1, 14.7)),
     )
 
