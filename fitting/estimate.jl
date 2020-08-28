@@ -60,7 +60,7 @@ function learn(epidat::EpiData,
         end
 
         # likelihood
-        observed = integrate(epidat, epimod, dep, theta)
+        observed = integrate(epimod, epidat, dep, theta)
 
         if isnothing(observed)
             Turing.acclogp!(_varinfo, -Inf)
@@ -91,7 +91,7 @@ epimod = build()
 epidat = EpiData(read(stdin), epimod, args["population"];
                  past=args["lead"])
 upper = args["trajectories"] + 1
-# dep = NoiseParams(args["trajectories"], 5)
-dep = StandardParams()
+dep = StandardDEParams()
+# dep = NoiseDEParams(args["trajectories"], 5)
 chains = learn(epidat, epimod, dep, args["draws"])
 write(args["trace"], chains)

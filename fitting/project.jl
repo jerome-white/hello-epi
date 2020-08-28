@@ -71,12 +71,12 @@ buffer[1:end] .= NaN
 stop = args["offset"] + days - 1
 index = range(args["offset"], stop=stop)
 
-# dep = NoiseParams(args["trajectories"], 5, Inf)
-dep = StandardParams()
+dep = StandardDEParams()
+# dep = NoiseDEParams(args["trajectories"], 5, Inf)
 
 @threads for i in 1:nrow(df)
     theta = Vector(view(df, i, :))
-    sol = integrate(data, model, dep, theta)
+    sol = integrate(model, data, dep, theta)
     if !isnothing(sol)
         bottom = i * days
         top = bottom - days + 1

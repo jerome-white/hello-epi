@@ -22,34 +22,32 @@ end
 #
 #
 abstract type AbstractDEParams end
-struct StandardParams <: AbstractDEParams end
-struct NoiseParams <: AbstractDEParams
+struct StandardDEParams <: AbstractDEParams end
+struct NoiseDEParams <: AbstractDEParams
     iterations::Int
     dt_order::Int
     limit::Real
     acc
 end
 
-StandardParams() = StandardParams(1)
-
-function NoiseParams(iterations::Int, dt_order::Int, limit::Real)
-    return NoiseParams(iterations, dt_order, limit, average)
+function NoiseDEParams(iterations::Int, dt_order::Int, limit::Real)
+    return NoiseDEParams(iterations, dt_order, limit, average)
 end
-function NoiseParams(iterations::Int, dt_order::Int)
-    return NoiseParams(iterations, dt_order, iterations)
+function NoiseDEParams(iterations::Int, dt_order::Int)
+    return NoiseDEParams(iterations, dt_order, iterations)
 end
-NoiseParams() = NoiseParams(1, 0)
+NoiseDEParams() = NoiseDEParams(1, 0)
 
-tsteps(params::NoiseParams) = 1 / 2 ^ params.dt_order
+tsteps(params::NoiseDEParams) = 1 / 2 ^ params.dt_order
 
 attempts(params::AbstractDEParams) = 1
-attempts(params::NoiseParams) = params.limit
+attempts(params::NoiseDEParams) = params.limit
 
 trajectories(params::AbstractDEParams) = 1
-trajectories(params::NoiseParams) = params.iterations
+trajectories(params::NoiseDEParams) = params.iterations
 
-function accrue(params::NoiseParams, values::AbstractArray{T,3})
-    where T <: Real
+function accrue(params::NoiseDEParams,
+                values::AbstractArray{T,3}) where T <: Real
     return params.acc(values)
 end
 
@@ -60,8 +58,7 @@ struct DEConditions
     saveat
 end
 
-function DEConditions(model::EpiModel,
-                      data::EpiData)
+function DEConditions(model::EpiModel, data::EpiData)
     return DEConditions(initial(data, model),
                         play(population(data)),
                         startstop(data),
@@ -87,7 +84,7 @@ end
 function integrate(model::EpiModel,
                    data::EpiData,
                    parameters::AbstractDEParams,
-                   theta)
+                   theta::AbstractArray{T,1}) where T <: Real
     sol = answer(model, data, parameters, theta)
     if !isnothing(sol)
         return transpose(sol)
@@ -122,8 +119,8 @@ function answer(model::EpiModel,
     limit = attempts(parameters)
     compartments = reported(model)
 
-    t0 = minimum(tspan)
     cond = DEConditions(model, data)
+    t0 = minimum(cond.tspan)
     (start, drift, diffusion) = theta
     noise = GeometricBrownianMotionProcess(drift, diffusion, t0, start)
     prob = RODEProblem(cond.ode, cond.u0, cond.tspan;
@@ -136,7 +133,7 @@ function answer(model::EpiModel,
         failure = 0
         while success < iterations && failure < limit
             sol = solve(prob, RandomEM();
-                        saveat=saveat,
+                        saveat=cond.saveat,
                         p=theta,
                         dt=dt)
             if sol.retcode == :Success
