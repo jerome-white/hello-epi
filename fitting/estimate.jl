@@ -90,7 +90,6 @@ args = cliargs()
 epimod = build()
 epidat = EpiData(read(stdin), epimod, args["population"];
                  past=args["lead"])
-upper = args["trajectories"] + 1
 dep = StandardDEParams()
 # dep = NoiseDEParams(args["trajectories"], 5)
 chains = learn(epidat, epimod, dep, args["draws"])
