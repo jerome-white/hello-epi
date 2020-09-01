@@ -39,9 +39,6 @@ end
 #
 function NegativeBinomial2(mean::Real, variance::Real)
     p = 1 / (1 + mean / variance)
-    if !(zero(p) < p <= one(p))
-        @error "" mean variance p
-    end
     return NegativeBinomial(variance, p)
 end
 
