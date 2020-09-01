@@ -33,3 +33,18 @@ end
 function GammaMeanVariance(mean::Real, variance::Real)
     return GammaMeanStd(mean, sqrt(variance))
 end
+
+#
+# https://github.com/cambridge-mlg/Covid19/blob/master/src/utils.jl
+#
+function NegativeBinomial2(mean::Real, variance::Real)
+    p = 1 / (1 + mean / variance)
+    if !(zero(p) < p <= one(p))
+        @error "" mean variance p
+    end
+    return NegativeBinomial(variance, p)
+end
+
+function MvNegativeBinomial(mean, variance::Real)
+    return product_distribution(NegativeBinomial2.(mean, variance))
+end
