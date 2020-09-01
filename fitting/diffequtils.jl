@@ -9,14 +9,18 @@ include("modeler.jl")  # virtual package
 #
 #
 #
-function accrue(f, values::AbstractArray{T,3}) where T <: Real
+reasonable(values::AbstractArray{<: Real}) = all(0 .<= values .< Inf)
+
+#
+#
+#
+function accrue(f, values::AbstractArray{<: Real, 3})
     return dropdims(f(values; dims=3); dims=3)
 end
 
-function average(values::AbstractArray{T,3}) where T <: Real
+function average(values::AbstractArray{<: Real, 3})
     return accrue(mean, values)
 end
-
 
 #
 #
@@ -47,7 +51,7 @@ trajectories(params::AbstractDEParams) = 1
 trajectories(params::NoiseDEParams) = params.iterations
 
 function accrue(params::NoiseDEParams,
-                values::AbstractArray{T,3}) where T <: Real
+                values::AbstractArray{<: Real, 3})
     return params.acc(values)
 end
 
@@ -76,7 +80,7 @@ function initial(data::EpiData, model::EpiModel;
     u0 = zeros(buckets)
     u0[compartment] = observed
     u0[1] = population(data) - sum(u0)
-    @assert all(u0 .>= 0)
+    @assert reasonable(u0)
 
     return u0
 end
@@ -84,7 +88,7 @@ end
 function integrate(model::EpiModel,
                    data::EpiData,
                    parameters::AbstractDEParams,
-                   theta::AbstractArray{T,1}) where T <: Real
+                   theta::AbstractVector{<:Real})
     sol = answer(model, data, parameters, theta)
     if !isnothing(sol)
         return transpose(sol)
@@ -138,7 +142,7 @@ function answer(model::EpiModel,
                         dt=dt)
             if sol.retcode == :Success
                 results = @view sol[compartments,:]
-                if all(results .>= 0)
+                if reasonable(results)
                     success += 1
                     solutions[:,:,success] = results
                     continue
