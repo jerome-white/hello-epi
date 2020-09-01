@@ -29,7 +29,7 @@ end
 
 function play(N::Int)
     return function (du, u, p, t, W)
-        (S, E, I, H, _, _) = u
+        (S, E, I, H) = u
         (trx, cfr) = p[4:5]
         (alpha, gamma, mu) = 1 ./ p[end-2:end]
 

@@ -25,8 +25,8 @@ end
 
 function play(N::Int)
     return function (du, u, p, t)
-        (S, E, I, H, _, _) = u
-        (alpha, gamma, mu) = ./(1, p[end-2:end])
+        (S, E, I, H) = u
+        (alpha, gamma, mu) = 1 ./ p[end-2:end]
         beta = p[1] * p[2]
 
         dS =  beta * S * I / N
