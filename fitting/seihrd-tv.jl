@@ -5,10 +5,11 @@ function build()
     compartments = (
         (:susceptible,  false),
         (:exposed,      false),
-        (:infected,     true),
-        (:hospitalised, false),
+        (:infected,     false),
+        (:hospitalised, true),
         (:recovered,    true),
         (:deceased,     true),
+        (:total,        true),
     )
 
     parameters = (
@@ -46,5 +47,6 @@ function play(N::Int)
         du[4] = dI - dH
         du[5] = dH * (1 - cfr)
         du[6] = dH * cfr
+        du[7] = dI
     end
 end
