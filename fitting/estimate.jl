@@ -51,28 +51,19 @@ function learn(epidat::EpiData,
             theta[i] ~ NamedDist(b, a)
         end
 
-        compartments = nobserved(epimod)
-
         # likelihood priors
-        sigma = Vector{T}(undef, compartments)
-        for i in 1:compartments
-            sigma[i] ~ InverseGamma(2, 3)
-        end
+        phi  = Vector{T}(undef, nobserved(epimod))
+        phi .~ positive(Beta(2, 5); lower=1e-12)
+        # phi .~ positive(Normal(0, 5); lower=1e-6)
 
         # likelihood
         observed = integrate(epimod, epidat, dep, theta)
-
         if isnothing(observed)
             Turing.acclogp!(_varinfo, -Inf)
         else
-            sol = convert.(T, observed)
-            for i in 1:compartments
-                mu = @view sol[:,i]
-                x[:,i] ~ MvNormal(mu, sqrt(sigma[i]))
+            for (i, (mu, sigma)) in enumerate(zip(eachcol(observed), phi))
+                x[:,i] ~ MvNegativeBinomial(mu, sigma)
             end
-            # for i in 1:first(size(view))
-            #     x[i,:] ~ MvNormal(view(sol, i, :), sqrt.(sigma))
-            # end
         end
     end
 
