@@ -1,7 +1,7 @@
 include("epimodel.jl")
 include("distutils.jl")
 
-function build()
+function BuildEpiModel()
     compartments = (
         (:susceptible,  false),
         (:exposed,      false),

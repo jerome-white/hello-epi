@@ -59,7 +59,7 @@ function main(args)
     chn = catchains(args["chains"])
     assignments = spread(chn, args["samples"])
 
-    model = build()
+    model = BuildEpiModel()
     results = DataFrame()
 
     for (i, j) in enumerate(eachchain(chn))

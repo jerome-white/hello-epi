@@ -47,7 +47,7 @@ end
 df = CSV.File(read(stdin)) |> DataFrame!
 args = cliargs()
 
-model = build()
+model = BuildEpiModel()
 buckets = nobserved(model)
 data = EpiData(args["observations"], model, args["population"];
                past=args["lead"],
